@@ -7,8 +7,8 @@
 #include <iostream>
 #include <string>
 
-const int screenWidth = 1920;
-const int screenHeight = 1080;
+int screenWidth = 1920;
+int screenHeight = 1080;
 int lastFrame = 0;
 const int frameTime = 1000/100;
 SDL_Window *screen = SDL_CreateWindow("Tetris", 0, 0, screenWidth, screenHeight, 0);
@@ -392,6 +392,11 @@ int init()
 
 	lastFrame = SDL_GetTicks();
 	std::srand(std::time(0));
+
+	SDL_DisplayMode dm;
+	SDL_GetDesktopDisplayMode(0, &dm);
+	screenWidth = dm.w;
+	screenHeight = dm.h;
 
 	return 0;
 }
