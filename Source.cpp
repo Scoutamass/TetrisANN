@@ -112,7 +112,7 @@ double inputWeights[232][hiddenNeurons];
 double hiddenWeights[hiddenLayers - 1][hiddenNeurons][hiddenNeurons];
 double outputWeights[hiddenNeurons][11];
 
-void drawDigit(int num, int x, int y)
+void drawDigit(int num, int x, int y)//Draws a Seven Segment Digit at (x, y)
 {
 	if(sevenSeg[num][0])
 	{
@@ -151,7 +151,7 @@ void drawDigit(int num, int x, int y)
 	}
 }
 
-void drawNum(int num, int x, int y, int digits = 0)
+void drawNum(int num, int x, int y, int digits = 0)//Draw a Seven Segment Number with Multiple Digits at (x, y), Drawing at Least 'digits' Digits Even if num has Fewer
 {
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	digits--;
@@ -167,7 +167,7 @@ void paint()
 {
 	SDL_RenderClear(renderer);
 	SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);
-	SDL_RenderFillRect(renderer, NULL);
+	SDL_RenderFillRect(renderer, NULL);//draw background
 	
 	SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
 	for(int x  = 0; x < 10; x++) for(int y = 2; y < 22; y++)//Draw Board Grid
@@ -186,10 +186,10 @@ void paint()
 		} 
 	}
 
-	int offset = 0;//Draw drop shadow
+	int offset = 0;//Find drop shadow
 	while(pieceY[0] + offset < 22 && pieceY[1] + offset < 22 && pieceY[2] + offset < 22 && pieceY[3] + offset < 22 && board[pieceY[0] + offset][pieceX[0]] == 0 && board[pieceY[1] + offset][pieceX[1]] == 0 && board[pieceY[2] + offset][pieceX[2]] == 0 && board[pieceY[3] + offset][pieceX[3]] == 0) offset++;
-	offset--;
-	SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+	offset--;//remove overshoot
+	SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);//Draw Drop Shaodw
 	for(int i = 0; i < 4; i++)
 	{
 		SDL_Rect r{pieceX[i] * squareSize + boardLeft, pieceY[i] * squareSize + boardTop + offset * squareSize, squareSize, squareSize};
@@ -222,10 +222,8 @@ void paint()
 		}
 	}
 
-	const int numX = boardLeft + squareSize * -8;
-	//Draw Number Labels
-
 	//Draw Numbers
+	const int numX = boardLeft + squareSize * -8;
 	drawNum(lineClears, 100, 100, 2);
 	drawNum(maxLines, 100, 100 + sevenSize * 3, 2);
 	drawNum((SDL_GetTicks() - startTime)/60000, 100, 100 + sevenSize * 9, 2);//Minutes
@@ -246,7 +244,7 @@ void paint()
 	SDL_RenderPresent(renderer);
 }
 
-void nextBag()
+void nextBag()//Adds another Bag of Pieces to the End of the Queue if it is not Long Enough
 {
 	int offset = 0;
 	while(queue[offset] >= 0) offset++;
@@ -256,7 +254,7 @@ void nextBag()
 	for(int i = 0; i < 7; i++) queue[i + offset] = pieces[i];
 }
 
-void nextPiece()
+void nextPiece()//Sets All of the Data for the Current Piece
 {
 	rotation = 0;
 	pieceY[0] = pieceData[currentPiece][0];
@@ -271,7 +269,7 @@ void nextPiece()
 	rotateAnchorY = pieceData[currentPiece][9];
 }
 
-void cyclePiece()
+void cyclePiece()//Sets the CUrrent Piece to the First in the Queue and Cycles the Queue
 {
 	currentPiece = queue[0];
 	for(int i = 0; i < 10; i++) queue[i] = queue[i + 1];
@@ -280,7 +278,7 @@ void cyclePiece()
 	nextPiece();
 }
 
-void placePiece(int time)
+void placePiece(int time)//Place the Current Piece and Cycle to the Next
 {
 	for(int i = 0; i < 4; i++) board[pieceY[i]][pieceX[i]] = currentPiece + 1;
 	fallTimer = time + fallTime;
@@ -288,7 +286,7 @@ void placePiece(int time)
 	cyclePiece();
 }
 
-bool dropPiece()
+bool dropPiece()//Move the Current Piece Down 1 if There is Space and Return if it was Succesful
 {
 	bool movable = true;
 	for(int i = 0; i < 4; i++) if(pieceY[i] > 20 || board[pieceY[i] + 1][pieceX[i]] != 0) movable = false;
@@ -300,7 +298,7 @@ bool dropPiece()
 	return movable;
 }
 
-bool moveRight()
+bool moveRight()//Move the Current Piece Right 1 if There is Space and Return if it was Succesful
 {
 	bool movable = true;
 	for(int i = 0; i < 4; i++) movable = movable && pieceX[i] < 9 && !board[pieceY[i]][pieceX[i] + 1];
@@ -312,7 +310,7 @@ bool moveRight()
 	return movable;
 }
 
-bool moveLeft()
+bool moveLeft()//Move the Current Piece Left 1 if There is Space and Return if it was Succesful
 {
 	bool movable = true;
 	for(int i = 0; i < 4; i++) movable = movable && pieceX[i] > 0 && !board[pieceY[i]][pieceX[i] - 1];
@@ -324,16 +322,11 @@ bool moveLeft()
 	return movable;
 }
 
-void scorePoints(int lines)
-{
-
-}
-
-void timeStep(int time)
+void timeStep(int time) //handles normal game logic
 {
 	bool fallable = true;
-	for(int i = 0; i < 4; i++) if(pieceY[i] > 20 || board[pieceY[i] + 1][pieceX[i]] != 0) fallable = false;
-	if(fallable)
+	for(int i = 0; i < 4; i++) if(pieceY[i] > 20 || board[pieceY[i] + 1][pieceX[i]] != 0) fallable = false;//check if the piece can move down
+	if(fallable) //tick fall timer, and drop piece when it's over
 	{
 		while(fallTimer <= time)
 		{
@@ -342,18 +335,18 @@ void timeStep(int time)
 		}
 		placeTimer = time + placeTime;
 		if(softDrop) while(dropPiece());
-	} else
+	} else //tick place timer, and place piece when it's over
 	{
 		if(placeTimer <= time) placePiece(time);
 		fallTimer = time + fallTime;
 	}
-	while(DASDir != 0 && DASTimer <= time)
+	while(DASDir != 0 && DASTimer <= time) //tick DAS timer, and move piece left or right it=f it's over
 	{
 		DASTimer = time + ARR;
 		if(DASDir == 1) if(!moveRight()) DASTimer++;
 		if(DASDir == -1) if(!moveLeft()) DASTimer++;
 	}
-	int linesCleared = 0;
+	int linesCleared = 0; //check for line clears and add them to the total
 	for(int i = 0; i < 22; i++)
 	{
 		bool full = true;
@@ -364,9 +357,8 @@ void timeStep(int time)
 			for(int j = i; j > 0; j--) for(int k = 0; k < 10; k++) board[j][k] = board[j - 1][k];
 		}
 	}
-	scorePoints(linesCleared);
 	lineClears += linesCleared;
-	if(gameMode == 2 && lineClears >= 40 && !done)
+	if(gameMode == 2 && lineClears >= 40 && !done) //print 40 line time and end game
 	{
 		done = true;
 		std::cout << (SDL_GetTicks() - startTime)/60000 << ":" << ((SDL_GetTicks() - startTime)%60000)/1000 << "." << (SDL_GetTicks() - startTime) % 1000;
@@ -375,7 +367,7 @@ void timeStep(int time)
 
 int init()
 {
-	if(SDL_Init(SDL_INIT_EVERYTHING) != 0) printf("error initializing SDL: %s\n", SDL_GetError());
+	if(SDL_Init(SDL_INIT_EVERYTHING) != 0) printf("error initializing SDL: %s\n", SDL_GetError());//initialize SDL
 	if(!screen)
 	{
 		std::cout << "Error making screen";
@@ -386,14 +378,14 @@ int init()
 		std::cout << "Error making renderer";
 		return 1;
 	}
-	SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);
+	SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);//Initialize Renderer
 	SDL_RenderClear(renderer);
 	SDL_RenderPresent(renderer);
 
-	lastFrame = SDL_GetTicks();
+	lastFrame = SDL_GetTicks();//Initialize Time
 	std::srand(std::time(0));
 
-	SDL_DisplayMode dm;
+	SDL_DisplayMode dm;//Initialize Screen Size
 	SDL_GetDesktopDisplayMode(0, &dm);
 	screenWidth = dm.w;
 	screenHeight = dm.h;
@@ -401,7 +393,7 @@ int init()
 	return 0;
 }
 
-void reset()
+void reset()//Reset the Game Without Closing it
 {
 	for(int i = 0; i < 11; i++) queue[i] = -1;
 	nextBag();
@@ -421,10 +413,10 @@ void moveReset(int time)//run every time the player moves the piece, resets time
 	DASTimer = time + DAS;
 }
 
-bool doKicks(int pieceX[4], int pieceY[4], int rotateDir)//rotateDir = 1 for cw, 3 for cc, 2 for 180
+bool doKicks(int pieceX[4], int pieceY[4], int rotateDir)//rotateDir = 1 for cw, 3 for cc, 2 for 180	//Moves the Current Piece After it is Rotated so that it Fits
 {
-	if(currentPiece == 3) return true;
-	for(int i = 0; i < 5; i++)
+	if(currentPiece == 3) return true;//O Always Fits
+	for(int i = 0; i < 5; i++)//Implementation of SRS, the Super Rotation System, as Describbed here: https://tetris.wiki/Super_Rotation_System
 	{
 		int offsetX = 0;
 		int offsetY = 0;
@@ -455,38 +447,38 @@ bool doKicks(int pieceX[4], int pieceY[4], int rotateDir)//rotateDir = 1 for cw,
 	return false;
 }
 
-void doKeys()
+void doKeys() //handle key presses
 {
 	SDL_Event event;
-	while(SDL_PollEvent(&event))
+	while(SDL_PollEvent(&event))//get the next key event in the queue
 	{
 		switch(event.type)
 		{
 			case SDL_KEYDOWN:
 				if(!event.key.repeat)
 				{
-					if(event.key.keysym.sym == SDLK_ESCAPE) done = true;
+					if(event.key.keysym.sym == SDLK_ESCAPE) done = true;//quit the game
 					if(gameMode == 1) return;
-					else if(event.key.keysym.sym == SDLK_DOWN || event.key.keysym.sym == SDLK_KP_5) softDrop = true;
+					else if(event.key.keysym.sym == SDLK_DOWN || event.key.keysym.sym == SDLK_KP_5) softDrop = true;//soft drop
 					else if(event.key.keysym.sym == SDLK_r) reset();
-					else if(event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_KP_8)
+					else if(event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_KP_8)//hard drop
 					{
 						while(dropPiece());
 						placeTimer = 0;
 					}
-					else if(event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_KP_6)
+					else if(event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_KP_6)//move right
 					{
 						DASDir = 1;
 						moveReset(event.key.timestamp);
 						moveRight();
 					}
-					else if(event.key.keysym.sym == SDLK_LEFT || event.key.keysym.sym == SDLK_KP_4)
+					else if(event.key.keysym.sym == SDLK_LEFT || event.key.keysym.sym == SDLK_KP_4)//move left
 					{
 						DASDir = -1;
 						moveReset(event.key.timestamp);
 						moveLeft();
 					}
-					else if(event.key.keysym.sym == SDLK_a)
+					else if(event.key.keysym.sym == SDLK_a)//rotate CCW
 					{
 						int tempPieceX[4] = {pieceX[0], pieceX[1], pieceX[2], pieceX[3]};
 						int tempPieceY[4] = {pieceY[0], pieceY[1], pieceY[2], pieceY[3]};
@@ -494,6 +486,7 @@ void doKeys()
 						for(int i = 0; i < 4; i++) tempPieceY[i] = (-(pieceX[i] * 2 - rotateAnchorX) + rotateAnchorY)/2;
 						moveReset(event.key.timestamp);
 
+						//move piece to fit
 						if(doKicks(tempPieceX, tempPieceY, 3))
 						{
 							for(int i = 0; i < 4; i++)
@@ -505,7 +498,7 @@ void doKeys()
 							rotation%=4;
 						}
 					}
-					else if(event.key.keysym.sym == SDLK_s)
+					else if(event.key.keysym.sym == SDLK_s)//rotate CW
 					{
 						int tempPieceX[4] = {pieceX[0], pieceX[1], pieceX[2], pieceX[3]};
 						int tempPieceY[4] = {pieceY[0], pieceY[1], pieceY[2], pieceY[3]};
@@ -513,6 +506,7 @@ void doKeys()
 						for(int i = 0; i < 4; i++) tempPieceY[i] = ((pieceX[i] * 2 - rotateAnchorX) + rotateAnchorY)/2;
 						moveReset(event.key.timestamp);
 
+						//move piece to fit
 						if(doKicks(tempPieceX, tempPieceY, 1))
 						{
 							for(int i = 0; i < 4; i++)
@@ -524,7 +518,7 @@ void doKeys()
 							rotation%=4;
 						}
 					}
-					else if(event.key.keysym.sym == SDLK_d)
+					else if(event.key.keysym.sym == SDLK_d)//rotate 180
 					{
 						int tempPieceX[4] = {pieceX[0], pieceX[1], pieceX[2], pieceX[3]};
 						int tempPieceY[4] = {pieceY[0], pieceY[1], pieceY[2], pieceY[3]};
@@ -532,6 +526,7 @@ void doKeys()
 						for(int i = 0; i < 4; i++) tempPieceY[i] = (-(pieceY[i] * 2 - rotateAnchorY) + rotateAnchorY)/2;
 						moveReset(event.key.timestamp);
 
+						//moce piece to fit
 						if(doKicks(tempPieceX, tempPieceY, 2))
 						{
 							for(int i = 0; i < 4; i++)
@@ -543,9 +538,9 @@ void doKeys()
 							rotation%=4;
 						}
 					}
-					else if(event.key.keysym.sym == SDLK_LSHIFT && !held)
+					else if(event.key.keysym.sym == SDLK_LSHIFT && !held)//hold piece
 					{
-						if(holdPiece == -1)
+						if(holdPiece == -1)//no held peice already
 						{
 							holdPiece = currentPiece;
 							cyclePiece();
@@ -563,7 +558,7 @@ void doKeys()
 				timeStep(event.key.timestamp);
 				break;
 			case SDL_KEYUP:
-				if(event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_KP_6 && DASDir == 1 || event.key.keysym.sym == SDLK_LEFT || event.key.keysym.sym == SDLK_KP_4 && DASDir == -1) DASDir = 0;
+				if(event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_KP_6 && DASDir == 1 || event.key.keysym.sym == SDLK_LEFT || event.key.keysym.sym == SDLK_KP_4 && DASDir == -1) DASDir = 0;//reset DAS
 				if(event.key.keysym.sym == SDLK_DOWN || event.key.keysym.sym == SDLK_KP_5) softDrop = false;
 			default:
 				break;
@@ -571,7 +566,7 @@ void doKeys()
 	}
 }
 
-void doNet()
+void doNet()//Run Neural Network
 {
 
 }
