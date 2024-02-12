@@ -7,18 +7,17 @@
 #include <iostream>
 #include <string>
 
-int screenWidth = 1920;
-int screenHeight = 1080;
+int screenWidth = 0;
+int screenHeight = 0;
 int lastFrame = 0;
-const int frameTime = 1000/100;
-SDL_Window *screen = SDL_CreateWindow("Tetris", 0, 0, screenWidth, screenHeight, 0);
-SDL_Renderer *renderer = SDL_CreateRenderer(screen, -1, SDL_RENDERER_SOFTWARE);
+SDL_Window *screen = SDL_CreateWindow("Tetris", 0, 0, 0, 0, 0);
+SDL_Renderer *renderer;
 bool done = false;
-int startTime = 0;
+int startTime = 0;//Time Since Boot or Last Reset, Used to Calculate Time Playing
 
-const int squareSize = screenHeight/23;
-const int boardLeft = screenWidth/2 - squareSize * 5;
-const int boardTop = screenHeight/2 - squareSize * 11;
+int squareSize = screenHeight/23;
+int boardLeft = screenWidth/2 - squareSize * 5;
+int boardTop = screenHeight/2 - squareSize * 11;
 //I, L, J, O, S, Z, T		Piece Order
 const int pieceRed[7] =   {100, 250, 25, 250, 25,  225, 150};
 const int pieceGreen[7] = {100, 100, 25, 200, 225, 25,  25};
@@ -367,6 +366,20 @@ void timeStep(int time) //handles normal game logic
 
 int init()
 {
+	SDL_DisplayMode dm;//Initialize Screen Size
+	if(SDL_GetDesktopDisplayMode(0, &dm))
+	{
+		std::cout << "Error Getting Display Mode";
+		return 1;
+	}
+	screenWidth = dm.w;
+	screenHeight = dm.h;
+	squareSize = screenHeight/23;
+	boardLeft = screenWidth/2 - squareSize * 5;
+	boardTop = screenHeight/2 - squareSize * 11;
+
+	SDL_SetWindowSize(screen, screenWidth, screenHeight);
+	renderer = SDL_CreateRenderer(screen, -1, SDL_RENDERER_SOFTWARE);
 	if(SDL_Init(SDL_INIT_EVERYTHING) != 0) printf("error initializing SDL: %s\n", SDL_GetError());//initialize SDL
 	if(!screen)
 	{
@@ -378,17 +391,14 @@ int init()
 		std::cout << "Error making renderer";
 		return 1;
 	}
+
+
 	SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);//Initialize Renderer
 	SDL_RenderClear(renderer);
 	SDL_RenderPresent(renderer);
 
 	lastFrame = SDL_GetTicks();//Initialize Time
 	std::srand(std::time(0));
-
-	SDL_DisplayMode dm;//Initialize Screen Size
-	SDL_GetDesktopDisplayMode(0, &dm);
-	screenWidth = dm.w;
-	screenHeight = dm.h;
 
 	return 0;
 }
