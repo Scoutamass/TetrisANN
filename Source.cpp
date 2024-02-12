@@ -9,39 +9,40 @@
 
 int screenWidth = 0;
 int screenHeight = 0;
-int lastFrame = 0;
+int lastFrame = 0;//The time on the Last Frame
 SDL_Window *screen = SDL_CreateWindow("Tetris", 0, 0, 0, 0, 0);
 SDL_Renderer *renderer;
-bool done = false;
+bool done = false;//Whether to Quit the Program or Not
 int startTime = 0;//Time Since Boot or Last Reset, Used to Calculate Time Playing
 
-int squareSize = screenHeight/23;
-int boardLeft = screenWidth/2 - squareSize * 5;
-int boardTop = screenHeight/2 - squareSize * 11;
+int squareSize = screenHeight/23;//The Size of the Squares on the Board
+int boardLeft = screenWidth/2 - squareSize * 5;//X Value of the Left Side of the Board
+int boardTop = screenHeight/2 - squareSize * 11;//Y Value of the Top of the Board
 //I, L, J, O, S, Z, T		Piece Order
-const int pieceRed[7] =   {100, 250, 25, 250, 25,  225, 150};
-const int pieceGreen[7] = {100, 100, 25, 200, 225, 25,  25};
-const int pieceBlue[7] =  {255, 50,  225, 25, 25,  25,  150};
+const int pieceRed[7] =   {100, 250, 25, 250, 25,  225, 150};//Red Values of the Colors of the Pieces
+const int pieceGreen[7] = {100, 100, 25, 200, 225, 25,  25};//Green Values of the Colors of the Pieces
+const int pieceBlue[7] =  {255, 50,  225, 25, 25,  25,  150};//Blue Values of the Colors of the Pieces
 
 int currentPiece = -1;
 int holdPiece = -1;
-int pieceX[4] = {0, 1, 1, 2};
-int pieceY[4] = {3, 3, 2, 3};
-int rotateAnchorX = 0;
+int pieceX[4] = {0, 1, 1, 2};//X Values of the individual Squares of the Current Piece
+int pieceY[4] = {3, 3, 2, 3};//Y Values of the individual Squares of the Current Piece
+int rotateAnchorX = 0;//The Place that the Current Piece will Rotate Around, Measured in Half Squares
 int rotateAnchorY = 0;
-int rotation = 0;
+int rotation = 0;//Where the Piece is Rotated to, Default is 0
 
-const int placeTime = 1000;
-int placeTimer = placeTime;
-int fallTime = 800;
-int fallTimer = fallTime * 2;
-const int ARR = 0;
-const int DAS = 100;
-int DASTimer = DAS;
+const int placeTime = 1000;//How long the Piece takes to Place after Hitting the Bottom of the Board
+int placeTimer = placeTime;//Timer to Track When the Piece will Place
+int fallTime = 800;//How long the Piece Takes to Fall
+int fallTimer = fallTime * 2;//Timer to Track When the Piece will Fall
+const int ARR = 0;//Auto Repeat Rate, or how long in between Each Repeated Movement When Left or Right is Held
+const int DAS = 100;//Delayed Auto Shift, or How Long Left or Right has to be Held to Start Repeating
+int DASTimer = DAS;//Timer to Track DAS
 int DASDir = 0;//-1 = left, 1 = right, 0 = none
 bool softDrop = false;
-bool held = false;
+bool held = false;//Whether the Player held on the Current Piece
 
+//Kick Tables, see DoKicks()
 int IKickTableX[4][5] = {
 	{0, -1, 2, -1, 2},
 	{0, 1, 1, 1, 1},
@@ -67,10 +68,10 @@ int kickTableY[4][5] = {
 	{0, 0, 1, -2, -2}
 };
 
-int queue[11] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+int queue[11] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};//The Queue of Upcoming Pieces
 
-int board[22][10]; 
-int pieceData[7][10] = {
+int board[22][10];
+int pieceData[7][10] = {//pieceY values, pieceX values, rotateAnchorX, rotateAnchorY
 	{1, 1, 1, 1, 3, 4, 5, 6, 9, 3},//I
 	{1, 1, 1, 0, 3, 4, 5, 5, 8, 2},//L
 	{0, 1, 1, 1, 3, 3, 4, 5, 8, 2},//J
@@ -78,13 +79,10 @@ int pieceData[7][10] = {
 	{1, 1, 0, 0, 3, 4, 4, 5, 8, 2},//S
 	{1, 1, 0, 0, 5, 4, 4, 3, 8, 2},//Z
 	{1, 1, 1, 0, 3, 4, 5, 4, 8, 2}//T
-}; //pieceY values, pieceX values, rotateAnchorX, rotateAnchorY
+}; 
 
-int score = 0;
-int highScore = 0;
 int lineClears = 0;
-int maxLines = 0;
-int combo = 0;
+int maxLines = 0;//Most Lines Cleared in this Session in One Reset
 
 const bool sevenSeg[10][7] = {
 	{true, true, true, false, true, true, true},
@@ -412,8 +410,6 @@ void reset()//Reset the Game Without Closing it
 	holdPiece = -1;
 	maxLines = std::max(lineClears, maxLines);
 	lineClears = 0;
-	highScore = std::max(score, highScore);
-	score = 0;
 	startTime = SDL_GetTicks();
 }
 
