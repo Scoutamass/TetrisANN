@@ -101,12 +101,11 @@ const int sevenThickness = 3;
 
 const int gameMode = 2;//0 = Normal, 1 = bot, 2 = 40 Lines
 
-double inputLayer[231];
 const int hiddenLayers = 2;
 const int hiddenNeurons = 50;
 double outputLayer[11];
-double inputWeights[232][hiddenNeurons];
-double hiddenWeights[hiddenLayers - 1][hiddenNeurons][hiddenNeurons];
+double inputWeights[276][hiddenNeurons];
+double hiddenWeights[hiddenLayers - 1][hiddenLayers - 1][hiddenNeurons];
 double outputWeights[hiddenNeurons][11];
 
 void drawDigit(int num, int x, int y)//Draws a Seven Segment Digit at (x, y)
@@ -572,8 +571,31 @@ void doKeys() //handle key presses
 	}
 }
 
+double sigmoid(double d)
+{
+	return 1/(1 + exp(-d));
+}
+
 void doNet()//Run Neural Network
 {
+	double inputLayer[276];//220 board, 7 piece type, 35 queue type, 7 hold type, 7 bag pos
+	//Set Inputs
+	for(int i = 0; i < 10; i++) for(int j = 0; j < 22; j++) inputLayer[i * 22 + j] = board[j][i];//Board
+	inputLayer[220 + currentPiece] = 1;//Current Piece
+	for(int i = 0; i < 5; i++) inputLayer[227 + i * 7 + queue[i]] = 1;//Queue
+	if(holdPiece != -1) inputLayer[262 + holdPiece] = 1;//Hold Piece
+	int bagPos = 0;//Bag Position
+	for(; bagPos < 11; bagPos++)if(queue[bagPos] == -1) break;
+	bagPos%=7;
+	bagPos = 6 - bagPos;
+	inputLayer[269 + bagPos] = 1;
+
+	double hiddenLayer[hiddenLayers][hiddenNeurons];
+	//First Hidden Layer
+	for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < 276; j++) hiddenLayer[0][i] += inputLayer[j] * inputWeights[j][i];//Add Acgtivations
+	for(int i = 0; i < hiddenNeurons; i++) hiddenLayer[0][i] = sigmoid(hiddenLayer[0][i]);
+
+	//Other Hidden Layers
 
 }
 
@@ -585,6 +607,7 @@ int main()
 	while(!done)
 	{
 		doKeys();
+		doNet();
 		timeStep(lastFrame);
 		paint();
 		//SDL_Delay(std::max(frameTime - (SDL_GetTicks() - lastFrame) * 1.0, 1.0));
