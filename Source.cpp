@@ -84,7 +84,7 @@ int pieceData[7][10] = {//pieceY values, pieceX values, rotateAnchorX, rotateAnc
 int lineClears = 0;
 int maxLines = 0;//Most Lines Cleared in this Session in One Reset
 
-const bool sevenSeg[10][7] = {
+const bool sevenSeg[10][7] = {//Data for Each Digit in a Seven Segment Display
 	{true, true, true, false, true, true, true},
 	{false, true, false, false, true, false, false},
 	{true, false, true, true, true, false, true},
