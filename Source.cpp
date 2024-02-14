@@ -597,6 +597,9 @@ void doNet()//Run Neural Network
 
 	//Other Hidden Layers
 
+	//Output Layer
+
+	//Simulate Outputs https://gamedev.stackexchange.com/questions/117600/simulate-keyboard-button-press
 }
 
 int main()
