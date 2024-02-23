@@ -105,7 +105,7 @@ const int hiddenLayers = 2;
 const int hiddenNeurons = 50;
 double outputLayer[11];
 double inputWeights[276][hiddenNeurons];
-double hiddenWeights[hiddenLayers - 1][hiddenLayers - 1][hiddenNeurons];
+double hiddenWeights[hiddenLayers - 1][hiddenNeurons][hiddenNeurons];
 double outputWeights[hiddenNeurons][11];
 
 void drawDigit(int num, int x, int y)//Draws a Seven Segment Digit at (x, y)
@@ -598,6 +598,66 @@ void doNet()//Run Neural Network
 	//Other Hidden Layers
 
 	//Output Layer
+	for (int k = 0; k < 11; k++) for (int x = 0; x < hiddenNeurons; x++) outputLayer[k] += hiddenLayer[k][x] * outputWeights[x][k];
+	for (int k = 0; k < 11; k++) outputLayer[k] = sigmoid( outputLayer[k] );
+	
+	double outputoption = 0;
+	int outputbutton = 0;
+	for (int y = 0; y < 11; y++) {
+		if (outputLayer[y] > outputoption) {
+			outputoption = outputLayer[y];
+			outputbutton = y;
+		}
+	}
+
+	// list of order of buttons
+	// 0 = left
+	// 1 = right
+	// 2 = hard drop
+	// 3 = soft drop
+	// 4 = hold
+	// 5 = das left
+	// 6 = das right
+	// 7 = clockwise rotation
+	// 8 = couterclockwise
+	// 9 = 180 rotation
+	// 10 = do nothing 
+
+	switch (outputbutton) {
+		case 0:
+
+			break;
+		case 1:
+
+			break;
+		case 3:
+
+			break;
+		case 4:
+
+			break;
+		case 5:
+
+			break;
+		case 6:
+
+			break;
+		case 7:
+
+			break;
+		case 8:
+
+			break;
+		case 9:
+
+			break;
+		case 10:
+
+			break;
+	}
+
+
+
 
 	//Simulate Outputs https://gamedev.stackexchange.com/questions/117600/simulate-keyboard-button-press
 }
