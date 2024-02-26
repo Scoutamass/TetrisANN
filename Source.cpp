@@ -101,7 +101,7 @@ const int sevenThickness = 3;
 
 const int gameMode = 2;//0 = Normal, 1 = bot, 2 = 40 Lines
 
-const int hiddenLayers = 2;
+const int hiddenLayers = 20;
 const int hiddenNeurons = 50;
 double outputLayer[11];
 double inputWeights[276][hiddenNeurons];
@@ -398,6 +398,10 @@ int init()
 	lastFrame = SDL_GetTicks();//Initialize Time
 	std::srand(std::time(0));
 
+	for(int i = 0; i < 276; i++) for(int j = 0; j < hiddenNeurons; j++) inputWeights[i][j] = rand() * 1.5 / INT_MAX;
+
+	for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = rand() * 1.5 / INT_MAX;
+
 	return 0;
 }
 
@@ -581,7 +585,9 @@ void doNet()//Run Neural Network
 {
 	double inputLayer[276];//220 board, 7 piece type, 35 queue type, 7 hold type, 7 bag pos
 	//Set Inputs
-	for (int i = 0; i < 10; i++) for (int j = 0; j < 22; j++) inputLayer[i * 22 + j] = board[j][i];//Board
+	for(int i = 0; i < 276; i++) inputLayer[i] = 0;
+
+	for(int i = 0; i < 10; i++) for(int j = 0; j < 22; j++) inputLayer[i * 22 + j] = board[j][i];//Board
 	inputLayer[220 + currentPiece] = 1;//Current Piece
 	for (int i = 0; i < 5; i++) inputLayer[227 + i * 7 + queue[i]] = 1;//Queue
 	if (holdPiece != -1) inputLayer[262 + holdPiece] = 1;//Hold Piece
@@ -592,11 +598,17 @@ void doNet()//Run Neural Network
 	inputLayer[269 + bagPos] = 1;
 
 	double hiddenLayer[hiddenLayers][hiddenNeurons];
+	for(int i = 0; i < hiddenLayers; i++) for(int j = 0; j < hiddenNeurons; j++) hiddenLayer[i][j] = 0;
 	//First Hidden Layer
-	for (int i = 0; i < hiddenNeurons; i++) for (int j = 0; j < 276; j++) hiddenLayer[0][i] += inputLayer[j] * inputWeights[j][i];//Add Acgtivations
-	for (int i = 0; i < hiddenNeurons; i++) hiddenLayer[0][i] = sigmoid(hiddenLayer[0][i]);
+	for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < 276; j++) hiddenLayer[0][i] += inputLayer[j] * inputWeights[j][i];//Add Activations
+	for(int i = 0; i < hiddenNeurons; i++) hiddenLayer[0][i] = sigmoid(hiddenLayer[0][i]);
 
 	//Other Hidden Layers
+	for(int k = 1; k < hiddenLayers; k++)
+	{
+		for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < 276; j++) hiddenLayer[k][i] += hiddenLayer[k - 1][j] * hiddenWeights[k - 1][i][j];//Add Activations
+		for(int i = 0; i < hiddenNeurons; i++) hiddenLayer[k][i] = sigmoid(hiddenLayer[k][i]);
+	}
 
 	//Output Layer
 	for (int k = 0; k < 11; k++) for (int x = 0; x < hiddenNeurons; x++) outputLayer[k] += hiddenLayer[k][x] * outputWeights[x][k];
@@ -661,6 +673,7 @@ void doNet()//Run Neural Network
 
 
 	//Simulate Outputs https://gamedev.stackexchange.com/questions/117600/simulate-keyboard-button-press
+
 }
 
 int main()
