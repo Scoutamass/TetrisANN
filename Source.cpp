@@ -623,6 +623,8 @@ void doNet()//Run Neural Network
 	// 9 = 180 rotation
 	// 10 = do nothing 
 
+
+	// github makes me want to throw my computer across the room and run it over multiple times then throw it into the garbage 
 	switch (outputbutton) {
 		case 0:
 
