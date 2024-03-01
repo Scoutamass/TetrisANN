@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <fstream>
 
 int screenWidth = 0;
 int screenHeight = 0;
@@ -398,7 +399,42 @@ int init()
 	lastFrame = SDL_GetTicks();//Initialize Time
 	std::srand(std::time(0));
 
-	for(int i = 0; i < 276; i++) for(int j = 0; j < hiddenNeurons; j++) inputWeights[i][j] = rand() * 1.5 / INT_MAX;
+	// for(int i = 0; i < 276; i++) for(int j = 0; j < hiddenNeurons; j++) inputWeights[i][j] = rand() / INT_MAX * 1.5;
+	
+	// makes the weights file with random weights 
+	std::fstream weights("weights.txt");
+	for (int i = 0; i < 276; i++) {
+		for (int j = 0; j < hiddenNeurons; j++) {
+			int weightx = rand() / INT_MAX * 1.5;
+			std::string weighty = std::to_string(weightx);
+			weights << weighty + ",";
+		}
+	}
+
+	for (int i = 0; i < hiddenNeurons; i++) {
+		for (int j = 0; j < 11; j++) {
+			int weightx = rand() / INT_MAX * 1.5;
+			std::string weighty = std::to_string(weightx);
+			weights << weighty + ",";
+		}
+	}
+	weights.close();
+
+	// gets the weights from the files and inputs them into the lists
+	std::fstream weights("weights.txt");
+
+	std::string weightstr;
+	getline(weights, weightstr);
+	double weightslist = weightstr.split(","); // c++ doesnt have .split so have to find new way to code around it 
+	for (int x = 0; x < hiddenNeurons; x++) {
+		double hiddennode[276];
+		for (int y = 0; y < 276; y++) {
+			
+
+
+		}
+	}
+
 
 	for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = rand() * 1.5 / INT_MAX;
 
@@ -483,7 +519,7 @@ void gameKeys(int button, int time)// 0 = left, 1 = right, 2 = hard drop, 3 = so
 		moveReset(time);
 		moveLeft();
 	}
-	else if (button == 5)//move left
+	else if (button == 5)//DAS left
 	{
 		DASDir = -1;
 		moveReset(time);
@@ -645,6 +681,8 @@ void doNet()//Run Neural Network
 			outputbutton = y;
 		}
 	}
+	gameKeys(outputbutton, SDL_GetTicks());
+
 
 	// list of order of buttons
 	// 0 = left
@@ -662,38 +700,7 @@ void doNet()//Run Neural Network
 
 	// github makes me want to throw my computer across the room and run it over multiple times then throw it into the garbage 
 	// hopefully this will owrk and github doesnt hate us again
-	switch (outputbutton) {
-		case 0:
-
-			break;
-		case 1:
-
-			break;
-		case 3:
-
-			break;
-		case 4:
-
-			break;
-		case 5:
-
-			break;
-		case 6:
-
-			break;
-		case 7:
-
-			break;
-		case 8:
-
-			break;
-		case 9:
-
-			break;
-		case 10:
-
-			break;
-	}
+	
 
 
 
