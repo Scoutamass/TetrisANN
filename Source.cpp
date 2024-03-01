@@ -661,6 +661,7 @@ void doNet()//Run Neural Network
 
 
 	// github makes me want to throw my computer across the room and run it over multiple times then throw it into the garbage 
+	// hopefully this will owrk and github doesnt hate us again
 	switch (outputbutton) {
 		case 0:
 
