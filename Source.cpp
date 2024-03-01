@@ -460,6 +460,117 @@ bool doKicks(int pieceX[4], int pieceY[4], int rotateDir)//rotateDir = 1 for cw,
 	return false;
 }
 
+void gameKeys(int button, int time)// 0 = left, 1 = right, 2 = hard drop, 3 = soft drop, 4 = hold, 5 = das left, 6 = das right, 7 = clockwise rotation, 8 = couterclockwise, 9 = 180 rotation, 10 = do nothing 
+{
+	if (button == 3) softDrop = true;//soft drop
+	else if (button == 2)//hard drop
+	{
+		while (dropPiece());
+		placeTimer = 0;
+	}
+	else if (button == 1)//move right
+	{
+		DASDir = 1;
+		moveReset(time);
+		moveRight();
+	}
+	else if(button == 6)//DAS Right
+	{
+		DASDir = 1;
+		moveReset(time);
+		while(moveRight());
+	}
+	else if (button == 0)//move left
+	{
+		DASDir = -1;
+		moveReset(time);
+		moveLeft();
+	}
+	else if (button == 5)//move left
+	{
+		DASDir = -1;
+		moveReset(time);
+		while(moveLeft());
+	}
+	else if (button == 8)//rotate CCW
+	{
+		int tempPieceX[4] = { pieceX[0], pieceX[1], pieceX[2], pieceX[3] };
+		int tempPieceY[4] = { pieceY[0], pieceY[1], pieceY[2], pieceY[3] };
+		for (int i = 0; i < 4; i++) tempPieceX[i] = ((pieceY[i] * 2 - rotateAnchorY) + rotateAnchorX) / 2;
+		for (int i = 0; i < 4; i++) tempPieceY[i] = (-(pieceX[i] * 2 - rotateAnchorX) + rotateAnchorY) / 2;
+		moveReset(time);
+
+		//move piece to fit
+		if (doKicks(tempPieceX, tempPieceY, 3))
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				pieceX[i] = tempPieceX[i];
+				pieceY[i] = tempPieceY[i];
+			}
+			rotation += 3;
+			rotation %= 4;
+		}
+	}
+	else if (button == 7)//rotate CW
+	{
+		int tempPieceX[4] = { pieceX[0], pieceX[1], pieceX[2], pieceX[3] };
+		int tempPieceY[4] = { pieceY[0], pieceY[1], pieceY[2], pieceY[3] };
+		for (int i = 0; i < 4; i++) tempPieceX[i] = (-(pieceY[i] * 2 - rotateAnchorY) + rotateAnchorX) / 2;
+		for (int i = 0; i < 4; i++) tempPieceY[i] = ((pieceX[i] * 2 - rotateAnchorX) + rotateAnchorY) / 2;
+		moveReset(time);
+
+		//move piece to fit
+		if (doKicks(tempPieceX, tempPieceY, 1))
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				pieceX[i] = tempPieceX[i];
+				pieceY[i] = tempPieceY[i];
+			}
+			rotation += 1;
+			rotation %= 4;
+		}
+	}
+	else if (button == 9)//rotate 180
+	{
+		int tempPieceX[4] = { pieceX[0], pieceX[1], pieceX[2], pieceX[3] };
+		int tempPieceY[4] = { pieceY[0], pieceY[1], pieceY[2], pieceY[3] };
+		for (int i = 0; i < 4; i++) tempPieceX[i] = (-(pieceX[i] * 2 - rotateAnchorX) + rotateAnchorX) / 2;
+		for (int i = 0; i < 4; i++) tempPieceY[i] = (-(pieceY[i] * 2 - rotateAnchorY) + rotateAnchorY) / 2;
+		moveReset(time);
+
+		//moce piece to fit
+		if (doKicks(tempPieceX, tempPieceY, 2))
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				pieceX[i] = tempPieceX[i];
+				pieceY[i] = tempPieceY[i];
+			}
+			rotation += 2;
+			rotation %= 4;
+		}
+	}
+	else if (button == 4 && !held)//hold piece
+	{
+		if (holdPiece == -1)//no held peice already
+		{
+			holdPiece = currentPiece;
+			cyclePiece();
+		}
+		else
+		{
+			int temp = holdPiece;
+			holdPiece = currentPiece;
+			currentPiece = temp;
+			nextPiece();
+		}
+		held = true;
+	}
+	timeStep(time);
+}
+
 void doKeys() //handle key presses
 {
 	SDL_Event event;
@@ -471,104 +582,16 @@ void doKeys() //handle key presses
 			if (!event.key.repeat)
 			{
 				if (event.key.keysym.sym == SDLK_ESCAPE) done = true;//quit the game
-				if (gameMode == 1) return;
-				else if (event.key.keysym.sym == SDLK_DOWN || event.key.keysym.sym == SDLK_KP_5) softDrop = true;//soft drop
 				else if (event.key.keysym.sym == SDLK_r) reset();
-				else if (event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_KP_8)//hard drop
-				{
-					while (dropPiece());
-					placeTimer = 0;
-				}
-				else if (event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_KP_6)//move right
-				{
-					DASDir = 1;
-					moveReset(event.key.timestamp);
-					moveRight();
-				}
-				else if (event.key.keysym.sym == SDLK_LEFT || event.key.keysym.sym == SDLK_KP_4)//move left
-				{
-					DASDir = -1;
-					moveReset(event.key.timestamp);
-					moveLeft();
-				}
-				else if (event.key.keysym.sym == SDLK_a)//rotate CCW
-				{
-					int tempPieceX[4] = { pieceX[0], pieceX[1], pieceX[2], pieceX[3] };
-					int tempPieceY[4] = { pieceY[0], pieceY[1], pieceY[2], pieceY[3] };
-					for (int i = 0; i < 4; i++) tempPieceX[i] = ((pieceY[i] * 2 - rotateAnchorY) + rotateAnchorX) / 2;
-					for (int i = 0; i < 4; i++) tempPieceY[i] = (-(pieceX[i] * 2 - rotateAnchorX) + rotateAnchorY) / 2;
-					moveReset(event.key.timestamp);
-
-					//move piece to fit
-					if (doKicks(tempPieceX, tempPieceY, 3))
-					{
-						for (int i = 0; i < 4; i++)
-						{
-							pieceX[i] = tempPieceX[i];
-							pieceY[i] = tempPieceY[i];
-						}
-						rotation += 3;
-						rotation %= 4;
-					}
-				}
-				else if (event.key.keysym.sym == SDLK_s)//rotate CW
-				{
-					int tempPieceX[4] = { pieceX[0], pieceX[1], pieceX[2], pieceX[3] };
-					int tempPieceY[4] = { pieceY[0], pieceY[1], pieceY[2], pieceY[3] };
-					for (int i = 0; i < 4; i++) tempPieceX[i] = (-(pieceY[i] * 2 - rotateAnchorY) + rotateAnchorX) / 2;
-					for (int i = 0; i < 4; i++) tempPieceY[i] = ((pieceX[i] * 2 - rotateAnchorX) + rotateAnchorY) / 2;
-					moveReset(event.key.timestamp);
-
-					//move piece to fit
-					if (doKicks(tempPieceX, tempPieceY, 1))
-					{
-						for (int i = 0; i < 4; i++)
-						{
-							pieceX[i] = tempPieceX[i];
-							pieceY[i] = tempPieceY[i];
-						}
-						rotation += 1;
-						rotation %= 4;
-					}
-				}
-				else if (event.key.keysym.sym == SDLK_d)//rotate 180
-				{
-					int tempPieceX[4] = { pieceX[0], pieceX[1], pieceX[2], pieceX[3] };
-					int tempPieceY[4] = { pieceY[0], pieceY[1], pieceY[2], pieceY[3] };
-					for (int i = 0; i < 4; i++) tempPieceX[i] = (-(pieceX[i] * 2 - rotateAnchorX) + rotateAnchorX) / 2;
-					for (int i = 0; i < 4; i++) tempPieceY[i] = (-(pieceY[i] * 2 - rotateAnchorY) + rotateAnchorY) / 2;
-					moveReset(event.key.timestamp);
-
-					//moce piece to fit
-					if (doKicks(tempPieceX, tempPieceY, 2))
-					{
-						for (int i = 0; i < 4; i++)
-						{
-							pieceX[i] = tempPieceX[i];
-							pieceY[i] = tempPieceY[i];
-						}
-						rotation += 2;
-						rotation %= 4;
-					}
-				}
-				else if (event.key.keysym.sym == SDLK_LSHIFT && !held)//hold piece
-				{
-					if (holdPiece == -1)//no held peice already
-					{
-						holdPiece = currentPiece;
-						cyclePiece();
-					}
-					else
-					{
-						int temp = holdPiece;
-						holdPiece = currentPiece;
-						currentPiece = temp;
-						nextPiece();
-					}
-					held = true;
-				}
+				else if (event.key.keysym.sym == SDLK_DOWN || event.key.keysym.sym == SDLK_KP_5) gameKeys(3, event.key.timestamp);//soft drop
+				else if (event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_KP_8) gameKeys(2, event.key.timestamp);//hard drop
+				else if (event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_KP_6) gameKeys(1, event.key.timestamp);//move right
+				else if (event.key.keysym.sym == SDLK_LEFT || event.key.keysym.sym == SDLK_KP_4) gameKeys(0, event.key.timestamp);//move left
+				else if (event.key.keysym.sym == SDLK_a) gameKeys(8, event.key.timestamp);//rotate CCW
+				else if (event.key.keysym.sym == SDLK_s) gameKeys(7, event.key.timestamp);//rotate CW
+				else if (event.key.keysym.sym == SDLK_d) gameKeys(9, event.key.timestamp);//rotate 180
+				else if (event.key.keysym.sym == SDLK_LSHIFT && !held) gameKeys(4, event.key.timestamp);//hold piece
 			}
-			timeStep(event.key.timestamp);
 			break;
 		case SDL_KEYUP:
 			if (event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_KP_6 && DASDir == 1 || event.key.keysym.sym == SDLK_LEFT || event.key.keysym.sym == SDLK_KP_4 && DASDir == -1) DASDir = 0;//reset DAS
