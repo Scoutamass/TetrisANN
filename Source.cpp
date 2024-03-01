@@ -6,6 +6,9 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <winuser.h>
+#include <conio.h>
+#include <stdlib.h>
 
 int screenWidth = 0;
 int screenHeight = 0;
@@ -412,7 +415,7 @@ void reset()//Reset the Game Without Closing it
 	placePiece(SDL_GetTicks());
 	for (int i = 0; i < 22; i++) for (int j = 0; j < 10; j++) board[i][j] = 0;
 	holdPiece = -1;
-	maxLines = std::max(lineClears, maxLines);
+	maxLines = max(lineClears, maxLines);
 	lineClears = 0;
 	startTime = SDL_GetTicks();
 }
@@ -636,38 +639,127 @@ void doNet()//Run Neural Network
 	// 9 = 180 rotation
 	// 10 = do nothing 
 
+ 
+	INPUT in[2] = {};
+	ZeroMemory(in, sizeof(in));
 
-	// github makes me want to throw my computer across the room and run it over multiple times then throw it into the garbage 
 	switch (outputbutton) {
 		case 0:
+			in[0].type = INPUT_KEYBOARD;
+			in[0].ki.wVk = 0x25;
+			in[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
 
+			in[1].type = INPUT_KEYBOARD;
+			in[1].ki.wVk = 0x25;
+			in[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+			UINT pressedkey = SendInput(2, in, sizeof(INPUT));
 			break;
 		case 1:
+			in[0].type = INPUT_KEYBOARD;
+			in[0].ki.wVk = 0x27;
+			in[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
 
+			in[1].type = INPUT_KEYBOARD;
+			in[1].ki.wVk = 0x27;
+			in[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+			UINT pressedkey = SendInput(2, in, sizeof(INPUT));
+			break;
+		case 2:
+			in[0].type = INPUT_KEYBOARD;
+			in[0].ki.wVk = 0x28;
+			in[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
+
+			in[1].type = INPUT_KEYBOARD;
+			in[1].ki.wVk = 0x28;
+			in[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+			UINT pressedkey = SendInput(2, in, sizeof(INPUT));
 			break;
 		case 3:
+			in[0].type = INPUT_KEYBOARD;
+			in[0].ki.wVk = 0x26;
+			in[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
 
+			in[1].type = INPUT_KEYBOARD;
+			in[1].ki.wVk = 0x26;
+			in[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+			UINT pressedkey = SendInput(2, in, sizeof(INPUT));
 			break;
 		case 4:
+			in[0].type = INPUT_KEYBOARD;
+			in[0].ki.wVk = 0xA0;
+			in[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
 
+			in[1].type = INPUT_KEYBOARD;
+			in[1].ki.wVk = 0xA0;
+			in[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+			UINT pressedkey = SendInput(2, in, sizeof(INPUT));
 			break;
 		case 5:
+			for (int x; x < 10; x++) {
+				in[0].type = INPUT_KEYBOARD;
+				in[0].ki.wVk = 0x25;
+				in[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
 
+				in[1].type = INPUT_KEYBOARD;
+				in[1].ki.wVk = 0x25;
+				in[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+				UINT pressedkey = SendInput(2, in, sizeof(INPUT));
+			}
 			break;
 		case 6:
+			for (int x; x < 10; x++) {
+				in[0].type = INPUT_KEYBOARD;
+				in[0].ki.wVk = 0x27;
+				in[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
 
+				in[1].type = INPUT_KEYBOARD;
+				in[1].ki.wVk = 0x27;
+				in[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+				UINT pressedkey = SendInput(2, in, sizeof(INPUT));
+			}
 			break;
 		case 7:
+			in[0].type = INPUT_KEYBOARD;
+			in[0].ki.wVk = 0x53;
+			in[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
 
+			in[1].type = INPUT_KEYBOARD;
+			in[1].ki.wVk = 0x53;
+			in[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+			UINT pressedkey = SendInput(2, in, sizeof(INPUT));
 			break;
 		case 8:
+			in[0].type = INPUT_KEYBOARD;
+			in[0].ki.wVk = 0x41;
+			in[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
 
+			in[1].type = INPUT_KEYBOARD;
+			in[1].ki.wVk = 0x41;
+			in[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+			UINT pressedkey = SendInput(2, in, sizeof(INPUT));
 			break;
 		case 9:
+			in[0].type = INPUT_KEYBOARD;
+			in[0].ki.wVk = 0x44;
+			in[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
 
+			in[1].type = INPUT_KEYBOARD;
+			in[1].ki.wVk = 0x44;
+			in[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+			UINT pressedkey = SendInput(2, in, sizeof(INPUT));
 			break;
 		case 10:
-
+			_sleep(1000);
 			break;
 	}
 
