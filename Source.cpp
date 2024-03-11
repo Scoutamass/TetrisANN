@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <fstream>
 
 class Tetris
 {
@@ -319,7 +320,7 @@ class Tetris
 		}
 		return movable;
 	}
-
+  
 	void timeStep(int time) //handles normal game logic
 	{
 		bool fallable = true;
@@ -394,18 +395,53 @@ class Tetris
 
 
 		SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);//Initialize Renderer
-		SDL_RenderClear(renderer);
-		SDL_RenderPresent(renderer);
+	SDL_RenderClear(renderer);
+	SDL_RenderPresent(renderer);
 
-		lastFrame = SDL_GetTicks();//Initialize Time
-		std::srand(std::time(0));
+	lastFrame = SDL_GetTicks();//Initialize Time
+	std::srand(std::time(0));
 
-		for(int i = 0; i < 276; i++) for(int j = 0; j < hiddenNeurons; j++) inputWeights[i][j] = rand() * 1.5 / INT_MAX;
-
-		for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = rand() * 1.5 / INT_MAX;
-
-		return 0;
+	// for(int i = 0; i < 276; i++) for(int j = 0; j < hiddenNeurons; j++) inputWeights[i][j] = rand() / INT_MAX * 1.5;
+	
+	// makes the weights file with random weights 
+	std::fstream weights("weights.txt");
+	for (int i = 0; i < 276; i++) {
+		for (int j = 0; j < hiddenNeurons; j++) {
+			int weightx = rand() / INT_MAX * 1.5;
+			std::string weighty = std::to_string(weightx);
+			weights << weighty + ",";
+		}
 	}
+
+	for (int i = 0; i < hiddenNeurons; i++) {
+		for (int j = 0; j < 11; j++) {
+			int weightx = rand() / INT_MAX * 1.5;
+			std::string weighty = std::to_string(weightx);
+			weights << weighty + ",";
+		}
+	}
+	weights.close();
+
+	// gets the weights from the files and inputs them into the lists
+	std::fstream weights("weights.txt");
+
+	std::string weightstr;
+	getline(weights, weightstr);
+	double weightslist = weightstr.split(","); // c++ doesnt have .split so have to find new way to code around it 
+	for (int x = 0; x < hiddenNeurons; x++) {
+		double hiddennode[276];
+		for (int y = 0; y < 276; y++) {
+			
+
+
+		}
+	}
+
+
+	for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = rand() * 1.5 / INT_MAX;
+
+	return 0;
+}
 
 	void reset()//Reset the Game Without Closing it
 	{
@@ -418,8 +454,9 @@ class Tetris
 		lineClears = 0;
 		startTime = SDL_GetTicks();
 	}
-
+  
 	void moveReset(int time)//run every time the player moves the piece, resets timers
+
 	{
 		placeTimer = time + placeTime;
 		DASTimer = time + DAS;
@@ -629,6 +666,8 @@ class Tetris
 			for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < 276; j++) hiddenLayer[k][i] += hiddenLayer[k - 1][j] * hiddenWeights[k - 1][i][j];//Add Activations
 			for(int i = 0; i < hiddenNeurons; i++) hiddenLayer[k][i] = sigmoid(hiddenLayer[k][i]);
 		}
+	}
+	gameKeys(outputbutton, SDL_GetTicks());
 
 		//Output Layer
 		for (int k = 0; k < 11; k++) for (int x = 0; x < hiddenNeurons; x++) outputLayer[k] += hiddenLayer[k][x] * outputWeights[x][k];
@@ -641,54 +680,7 @@ class Tetris
 				outputoption = outputLayer[y];
 				outputbutton = y;
 			}
-		}
-
-		// list of order of buttons
-		// 0 = left
-		// 1 = right
-		// 2 = hard drop
-		// 3 = soft drop
-		// 4 = hold
-		// 5 = das left
-		// 6 = das right
-		// 7 = clockwise rotation
-		// 8 = couterclockwise
-		// 9 = 180 rotation
-		// 10 = do nothing 
-
-
-		// github makes me want to throw my computer across the room and run it over multiple times then throw it into the garbage 
-		switch (outputbutton) {
-			case 0:
-
-				break;
-			case 1:
-
-				break;
-			case 3:
-
-				break;
-			case 4:
-
-				break;
-			case 5:
-
-				break;
-			case 6:
-
-				break;
-			case 7:
-
-				break;
-			case 8:
-
-				break;
-			case 9:
-
-				break;
-			case 10:
-
-				break;
+    }
 		}
 
 
