@@ -674,9 +674,9 @@ class Tetris
 	{
 		double inputLayer[276];//220 board, 7 piece type, 35 queue type, 7 hold type, 7 bag pos
 		//Set Inputs
-		for(int i = 0; i < 276; i++) inputLayer[i] = 0;
+		for (int i = 0; i < 276; i++) inputLayer[i] = 0;
 
-		for(int i = 0; i < 10; i++) for(int j = 0; j < 22; j++) inputLayer[i * 22 + j] = board[j][i];//Board
+		for (int i = 0; i < 10; i++) for (int j = 0; j < 22; j++) inputLayer[i * 22 + j] = board[j][i];//Board
 		inputLayer[220 + currentPiece] = 1;//Current Piece
 		for (int i = 0; i < 5; i++) inputLayer[227 + i * 7 + queue[i]] = 1;//Queue
 		if (holdPiece != -1) inputLayer[262 + holdPiece] = 1;//Hold Piece
@@ -687,24 +687,22 @@ class Tetris
 		inputLayer[269 + bagPos] = 1;
 
 		double hiddenLayer[hiddenLayers][hiddenNeurons];
-		for(int i = 0; i < hiddenLayers; i++) for(int j = 0; j < hiddenNeurons; j++) hiddenLayer[i][j] = 0;
+		for (int i = 0; i < hiddenLayers; i++) for (int j = 0; j < hiddenNeurons; j++) hiddenLayer[i][j] = 0;
 		//First Hidden Layer
-		for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < 276; j++) hiddenLayer[0][i] += inputLayer[j] * inputWeights[j][i];//Add Activations
-		for(int i = 0; i < hiddenNeurons; i++) hiddenLayer[0][i] = sigmoid(hiddenLayer[0][i]);
+		for (int i = 0; i < hiddenNeurons; i++) for (int j = 0; j < 276; j++) hiddenLayer[0][i] += inputLayer[j] * inputWeights[j][i];//Add Activations
+		for (int i = 0; i < hiddenNeurons; i++) hiddenLayer[0][i] = sigmoid(hiddenLayer[0][i]);
 
 		//Other Hidden Layers
-		for(int k = 1; k < hiddenLayers; k++)
+		for (int k = 1; k < hiddenLayers; k++)
 		{
-			for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < 276; j++) hiddenLayer[k][i] += hiddenLayer[k - 1][j] * hiddenWeights[k - 1][i][j];//Add Activations
-			for(int i = 0; i < hiddenNeurons; i++) hiddenLayer[k][i] = sigmoid(hiddenLayer[k][i]);
+			for (int i = 0; i < hiddenNeurons; i++) for (int j = 0; j < 276; j++) hiddenLayer[k][i] += hiddenLayer[k - 1][j] * hiddenWeights[k - 1][i][j];//Add Activations
+			for (int i = 0; i < hiddenNeurons; i++) hiddenLayer[k][i] = sigmoid(hiddenLayer[k][i]);
 		}
-	}
-	gameKeys(outputbutton, SDL_GetTicks());
 
 		//Output Layer
 		for (int k = 0; k < 11; k++) for (int x = 0; x < hiddenNeurons; x++) outputLayer[k] += hiddenLayer[k][x] * outputWeights[x][k];
 
-	  for (int k = 0; k < 11; k++) outputLayer[k] = sigmoid( outputLayer[k] );
+		for (int k = 0; k < 11; k++) outputLayer[k] = sigmoid(outputLayer[k]);
 		double outputoption = 0;
 		int outputbutton = 0;
 		for (int y = 0; y < 11; y++) {
@@ -712,17 +710,20 @@ class Tetris
 				outputoption = outputLayer[y];
 				outputbutton = y;
 			}
-    }
 		}
+
+		gameKeys(outputbutton, SDL_GetTicks());
+	}
 
 
 
 
 		//Simulate Outputs https://gamedev.stackexchange.com/questions/117600/simulate-keyboard-button-press
 
-	}
 
-		public:
+
+	public:
+
 	Tetris(int modeGame)
 	{
 		gameMode = modeGame;
