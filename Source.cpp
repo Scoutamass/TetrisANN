@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <vector>
 
 int screenWidth = 0;
 int screenHeight = 0;
@@ -407,7 +408,7 @@ int init()
 		for (int j = 0; j < hiddenNeurons; j++) {
 			int weightx = rand() / INT_MAX * 1.5;
 			std::string weighty = std::to_string(weightx);
-			weights << weighty + ",";
+			weights << weighty + "\n";
 		}
 	}
 
@@ -418,14 +419,45 @@ int init()
 			weights << weighty + ",";
 		}
 	}
-	weights.close();
+	//weights.close();
 
 	// gets the weights from the files and inputs them into the lists
-	std::fstream weights("weights.txt");
+	//std::fstream weights("weights.txt");
 
 	std::string weightstr;
-	getline(weights, weightstr);
-	double weightslist = weightstr.split(","); // c++ doesnt have .split so have to find new way to code around it 
+	for (int x = 0; x < 276; x++) {
+		for (int y = 0; y < hiddenNeurons; y++) {
+			getline(weights, weightstr);
+			inputWeights[x][y] = stod(weightstr);
+		}
+
+	}
+
+	for (int x = 0; x < hiddenLayers; x++) {
+		for (int y = 0; y < hiddenNeurons; y++) {
+			for (int z = 0; z < hiddenNeurons; z++) {
+				getline(weights, weightstr);
+				hiddenWeights[x][y][z] = stod(weightstr);
+			}
+		}
+
+	}
+
+	for (int x = 0; x < hiddenNeurons; x++) {
+		for (int y = 0; y < 11; y++) {
+			getline(weights, weightstr);
+			outputWeights[x][y] = stod(weightstr);
+		}
+	}
+
+
+/*	std::vector<double> weightslist; // c++ doesnt have .split so have to find new way to code around it possibly to delete 
+	while (weightstr != "\O") {
+		weightslist.push_back(stod(weightstr));
+		getline(weights, weightstr);
+	}
+	*/
+
 	for (int x = 0; x < hiddenNeurons; x++) {
 		double hiddennode[276];
 		for (int y = 0; y < 276; y++) {
