@@ -34,9 +34,11 @@ class Tetris
 	int rotateAnchorY = 0;
 	int rotation = 0;//Where the Piece is Rotated to, Default is 0
 
-	static const int placeTime = 1000;//How long the Piece takes to Place after Hitting the Bottom of the Board
+	int gameMode = 2;//0 = Normal, 1 = bot, 2 = 40 Lines
+
+	int placeTime = (gameMode == 1) ? 150 : 1000;//How long the Piece takes to Place after Hitting the Bottom of the Board
 	int placeTimer = placeTime;//Timer to Track When the Piece will Place
-	int fallTime = 800;//How long the Piece Takes to Fall
+	int fallTime = (gameMode == 1) ? 100 : 800;//How long the Piece Takes to Fall
 	int fallTimer = fallTime * 2;//Timer to Track When the Piece will Fall
 	static const int ARR = 0;//Auto Repeat Rate, or how long in between Each Repeated Movement When Left or Right is Held
 	static const int DAS = 100;//Delayed Auto Shift, or How Long Left or Right has to be Held to Start Repeating
@@ -44,6 +46,9 @@ class Tetris
 	int DASDir = 0;//-1 = left, 1 = right, 0 = none
 	bool softDrop = false;
 	bool held = false;//Whether the Player held on the Current Piece
+	bool grounded = false;//If the piece was unable to fall last frame
+	const int moveResetLimit = 5;
+	int moveResets = 0;
 
 	//Kick Tables, see DoKicks()
 	int IKickTableX[4][5] = {
@@ -102,14 +107,19 @@ class Tetris
 	static const int sevenSize = 10;
 	static const int sevenThickness = 3;
 
-	int gameMode = 1;//0 = Normal, 1 = bot, 2 = 40 Lines
-
-	static const int hiddenLayers = 20;
+	static const int hiddenLayers = 2;
 	static const int hiddenNeurons = 50;
+	double inputLayer[276];//220 board, 7 piece type, 35 queue type, 7 hold type, 7 bag pos
+	double hiddenLayer[hiddenLayers][hiddenNeurons];
 	double outputLayer[11];
 	double inputWeights[276][hiddenNeurons];
 	double hiddenWeights[hiddenLayers - 1][hiddenNeurons][hiddenNeurons];
 	double outputWeights[hiddenNeurons][11];
+	double maximumActivation = 0;
+	int outputbutton = 0;
+
+	const int lineClearWeight = 1000;
+	const double surviveWeight = 0.01;
 
 	double randDouble(double min, double max)
 	{
@@ -245,6 +255,40 @@ class Tetris
 		SDL_Rect board = { boardLeft, boardTop + squareSize * 2, squareSize * 10, squareSize * 20 };
 		SDL_RenderDrawRect(renderer, &board);
 
+		for(int i = 0; i < 11; i++) if(outputLayer[i] > maximumActivation) maximumActivation = outputLayer[i];//Find maximum output activation
+
+		//Displaying network
+		if(gameMode == 1)
+		{
+			const int ANNHeight = 552;
+			const int ANNWidth = 20;
+
+			const int inputHeight = ANNHeight/276;
+			for(int i = 0; i < 276; i++)//Display input layer
+			{
+				SDL_SetRenderDrawColor(renderer, inputLayer[i] * 255, inputLayer[i] * 255, inputLayer[i] * 255, 255);//Filling
+				SDL_Rect r = {ANNWidth * 4, inputHeight * i + 300, ANNWidth, inputHeight};
+				SDL_RenderFillRect(renderer, &r);
+			}
+
+			const int hiddenHeight = ANNHeight/hiddenNeurons;
+			for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < hiddenLayers; j++)//Display hidden layers
+			{
+				SDL_SetRenderDrawColor(renderer, hiddenLayer[j][i] / maximumActivation * 255, hiddenLayer[j][i] / maximumActivation * 255, hiddenLayer[j][i] / maximumActivation * 255, 255);//Filling
+				SDL_Rect r = {ANNWidth * 5 + ANNWidth * j, hiddenHeight * i + 300, ANNWidth, hiddenHeight};
+				SDL_RenderFillRect(renderer, &r);
+			}
+
+			const int outputHeight = ANNHeight/11;
+			for(int i = 0; i < 11; i++)//Display output layer
+			{
+				SDL_SetRenderDrawColor(renderer, outputLayer[i]/maximumActivation * 255, outputLayer[i]/maximumActivation * 255, outputLayer[i]/maximumActivation * 255, 255);//Filling
+				if(outputbutton == i) SDL_SetRenderDrawColor(renderer, 0, outputLayer[i]/maximumActivation * 255, 0, 255);//Highlight chosen option
+				SDL_Rect r = {ANNWidth * 5 + ANNWidth * hiddenLayers, outputHeight * i + 300, ANNWidth, outputHeight};
+				SDL_RenderFillRect(renderer, &r);
+			}
+		}
+
 		SDL_RenderPresent(renderer);
 	}
 
@@ -271,9 +315,11 @@ class Tetris
 		pieceX[3] = pieceData[currentPiece][7];
 		rotateAnchorX = pieceData[currentPiece][8];
 		rotateAnchorY = pieceData[currentPiece][9];
+
+		for(int i = 0; i < 4; i++) if(board[pieceY[i]][pieceX[i]]) done = true;
 	}
 
-	void cyclePiece()//Sets the CUrrent Piece to the First in the Queue and Cycles the Queue
+	void cyclePiece()//Sets the Current Piece to the First in the Queue and Cycles the Queue
 	{
 		currentPiece = queue[0];
 		for (int i = 0; i < 10; i++) queue[i] = queue[i + 1];
@@ -287,6 +333,7 @@ class Tetris
 		for (int i = 0; i < 4; i++) board[pieceY[i]][pieceX[i]] = currentPiece + 1;
 		fallTimer = time + fallTime;
 		held = false;
+		moveResets = 0;
 		cyclePiece();
 	}
 
@@ -337,13 +384,16 @@ class Tetris
 				fallTimer += fallTime;
 				dropPiece();
 			}
+			grounded = false;
 			placeTimer = time + placeTime;
 			if (softDrop) while (dropPiece());
 		}
 		else //tick place timer, and place piece when it's over
 		{
-			if (placeTimer <= time) placePiece(time);
+			if(grounded == false) moveResets++;
+			if (placeTimer <= time || moveResets > moveResetLimit) placePiece(time);
 			fallTimer = time + fallTime;
+			grounded = true;
 		}
 		while (DASDir != 0 && DASTimer <= time) //tick DAS timer, and move piece left or right it=f it's over
 		{
@@ -366,7 +416,7 @@ class Tetris
 		if (gameMode == 2 && lineClears >= 40 && !done) //print 40 line time and end game
 		{
 			done = true;
-			std::cout << (SDL_GetTicks() - startTime) / 60000 << ":" << ((SDL_GetTicks() - startTime) % 60000) / 1000 << "." << (SDL_GetTicks() - startTime) % 1000;
+			//std::cout << (SDL_GetTicks() - startTime) / 60000 << ":" << ((SDL_GetTicks() - startTime) % 60000) / 1000 << "." << (SDL_GetTicks() - startTime) % 1000;
 		}
 	}
 
@@ -449,8 +499,8 @@ class Tetris
 	}
   
 	void moveReset(int time)//run every time the player moves the piece, resets timers
-
 	{
+		if(gameMode == 1) return;
 		placeTimer = time + placeTime;
 		DASTimer = time + DAS;
 	}
@@ -633,11 +683,11 @@ class Tetris
 
 	void doNet()//Run Neural Network
 	{
-		double inputLayer[276];//220 board, 7 piece type, 35 queue type, 7 hold type, 7 bag pos
 		//Set Inputs
 		for(int i = 0; i < 276; i++) inputLayer[i] = 0;
 
 		for(int i = 0; i < 10; i++) for(int j = 0; j < 22; j++) inputLayer[i * 22 + j] = board[j][i];//Board
+		for(int i = 0; i < 4; i++) inputLayer[pieceX[i] * 22 + pieceY[i]] = 0.5;
 		inputLayer[220 + currentPiece] = 1;//Current Piece
 		for (int i = 0; i < 5; i++) inputLayer[227 + i * 7 + queue[i]] = 1;//Queue
 		if (holdPiece != -1) inputLayer[262 + holdPiece] = 1;//Hold Piece
@@ -647,7 +697,6 @@ class Tetris
 		bagPos = 6 - bagPos;
 		inputLayer[269 + bagPos] = 1;
 
-		double hiddenLayer[hiddenLayers][hiddenNeurons];
 		for(int i = 0; i < hiddenLayers; i++) for(int j = 0; j < hiddenNeurons; j++) hiddenLayer[i][j] = 0;
 		//First Hidden Layer
 		for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < 276; j++) hiddenLayer[0][i] += inputLayer[j] * inputWeights[j][i];//Add Activations
@@ -665,7 +714,7 @@ class Tetris
 
 	  for (int k = 0; k < 11; k++) outputLayer[k] = sigmoid( outputLayer[k] );
 		double outputoption = 0;
-		int outputbutton = 0;
+		outputbutton = 0;
 		for (int y = 0; y < 11; y++) {
 			if (outputLayer[y] > outputoption) {
 				outputoption = outputLayer[y];
@@ -673,8 +722,8 @@ class Tetris
 			}
     
 		}
-		for(int i = 0; i < 11; i++) std::cout << outputLayer[i] << "\n";
-		std::cout << "\n";
+		//for(int i = 0; i < 11; i++) std::cout << outputLayer[i] << "\n";
+		//std::cout << "\n";
 	gameKeys(outputbutton, SDL_GetTicks());
 		
 
@@ -708,11 +757,17 @@ class Tetris
 		SDL_DestroyWindow(screen);
 		SDL_Quit();
 	}
+
+	int calcScore()
+	{
+		return lineClears * lineClearWeight/lastFrame + int(lastFrame * surviveWeight);
+	}
 };
 
 int main()
 {
 	Tetris* t = new Tetris(1);
 	(* t).run();
+	std::cout << (*t).calcScore();
 	return 0;
 }
