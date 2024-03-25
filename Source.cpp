@@ -102,7 +102,7 @@ class Tetris
 	static const int sevenSize = 10;
 	static const int sevenThickness = 3;
 
-	int gameMode = 0;//0 = Normal, 1 = bot, 2 = 40 Lines
+	int gameMode = 1;//0 = Normal, 1 = bot, 2 = 40 Lines
 
 	static const int hiddenLayers = 20;
 	static const int hiddenNeurons = 50;
@@ -110,6 +110,11 @@ class Tetris
 	double inputWeights[276][hiddenNeurons];
 	double hiddenWeights[hiddenLayers - 1][hiddenNeurons][hiddenNeurons];
 	double outputWeights[hiddenNeurons][11];
+
+	double randDouble(double min, double max)
+	{
+		return (rand() * 1.0/RAND_MAX * (max - min)) + min;
+	}
 
 	void drawDigit(int num, int x, int y)//Draws a Seven Segment Digit at (x, y)
 	{
@@ -401,8 +406,10 @@ class Tetris
 	lastFrame = SDL_GetTicks();//Initialize Time
 	std::srand(std::time(0));
 
-	// for(int i = 0; i < 276; i++) for(int j = 0; j < hiddenNeurons; j++) inputWeights[i][j] = rand() / INT_MAX * 1.5;
-	
+	for(int i = 0; i < 276; i++) for(int j = 0; j < hiddenNeurons; j++) inputWeights[i][j] = randDouble(-1, 1);
+	for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = randDouble(-1, 1);
+	for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < 11; j++) outputWeights[i][j] = randDouble(-1, 1);
+
 	// makes the weights file with random weights 
 	std::fstream weights("weights.txt");
 	for (int i = 0; i < 276; i++) {
@@ -420,23 +427,9 @@ class Tetris
 			weights << weighty + ",";
 		}
 	}
-	weights.close();
-
-	// gets the weights from the files and inputs them into the lists
-	std::fstream weights("weights.txt");
 
 	std::string weightstr;
 	getline(weights, weightstr);
-	double weightslist = weightstr.split(","); // c++ doesnt have .split so have to find new way to code around it 
-	for (int x = 0; x < hiddenNeurons; x++) {
-		double hiddennode[276];
-		for (int y = 0; y < 276; y++) {
-			
-
-
-		}
-	}
-
 
 	for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = rand() * 1.5 / INT_MAX;
 
@@ -666,8 +659,6 @@ class Tetris
 			for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < 276; j++) hiddenLayer[k][i] += hiddenLayer[k - 1][j] * hiddenWeights[k - 1][i][j];//Add Activations
 			for(int i = 0; i < hiddenNeurons; i++) hiddenLayer[k][i] = sigmoid(hiddenLayer[k][i]);
 		}
-	}
-	gameKeys(outputbutton, SDL_GetTicks());
 
 		//Output Layer
 		for (int k = 0; k < 11; k++) for (int x = 0; x < hiddenNeurons; x++) outputLayer[k] += hiddenLayer[k][x] * outputWeights[x][k];
@@ -680,8 +671,12 @@ class Tetris
 				outputoption = outputLayer[y];
 				outputbutton = y;
 			}
-    }
+    
 		}
+		for(int i = 0; i < 11; i++) std::cout << outputLayer[i] << "\n";
+		std::cout << "\n";
+	gameKeys(outputbutton, SDL_GetTicks());
+		
 
 
 
@@ -717,7 +712,7 @@ class Tetris
 
 int main()
 {
-	Tetris* t = new Tetris(2);
+	Tetris* t = new Tetris(1);
 	(* t).run();
 	return 0;
 }
