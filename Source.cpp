@@ -398,7 +398,75 @@ int init()
 	lastFrame = SDL_GetTicks();//Initialize Time
 	std::srand(std::time(0));
 
-	for(int i = 0; i < 276; i++) for(int j = 0; j < hiddenNeurons; j++) inputWeights[i][j] = rand() * 1.5 / INT_MAX;
+	// for(int i = 0; i < 276; i++) for(int j = 0; j < hiddenNeurons; j++) inputWeights[i][j] = rand() / INT_MAX * 1.5;
+	
+	// makes the weights file with random weights 
+	std::fstream weights("weights.txt");
+	for (int i = 0; i < 276; i++) {
+		for (int j = 0; j < hiddenNeurons; j++) {
+			int weightx = rand() / INT_MAX * 1.5;
+			std::string weighty = std::to_string(weightx);
+			weights << weighty + "\n";
+		}
+	}
+
+	for (int i = 0; i < hiddenNeurons; i++) {
+		for (int j = 0; j < 11; j++) {
+			int weightx = rand() / INT_MAX * 1.5;
+			std::string weighty = std::to_string(weightx);
+			weights << weighty + "\n";
+		}
+	}
+	weights.close();
+
+	// gets the weights from the files and inputs them into the lists
+	weights = std::fstream("weights.txt");
+
+		std::string weightstr;
+		for (int x = 0; x < 276; x++) {
+			for (int y = 0; y < hiddenNeurons; y++) {
+				getline(weights, weightstr);
+				std::cout << weightstr;
+				inputWeights[x][y] = stod(weightstr);
+			}
+
+		}
+
+		for (int x = 0; x < hiddenLayers; x++) {
+			for (int y = 0; y < hiddenNeurons; y++) {
+				for (int z = 0; z < hiddenNeurons; z++) {
+					getline(weights, weightstr);
+					hiddenWeights[x][y][z] = stod(weightstr);
+				}
+			}
+
+		}
+
+		for (int x = 0; x < hiddenNeurons; x++) {
+			for (int y = 0; y < 11; y++) {
+				getline(weights, weightstr);
+				outputWeights[x][y] = stod(weightstr);
+			}
+		}
+
+
+
+/*	std::vector<double> weightslist; // c++ doesnt have .split so have to find new way to code around it possibly to delete 
+	while (weightstr != "\O") {
+		weightslist.push_back(stod(weightstr));
+		getline(weights, weightstr);
+	}
+	*/
+
+	for (int x = 0; x < hiddenNeurons; x++) {
+		double hiddennode[276];
+		for (int y = 0; y < 276; y++) {
+			
+
+
+		}
+	}
+
 
 	for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = rand() * 1.5 / INT_MAX;
 
