@@ -10,9 +10,10 @@
 
 class Tetris
 {
+	public:
 	int screenWidth = 0;
 	int screenHeight = 0;
-	int lastFrame = 0;//The time on the Last Frame
+	int lastFrame = 1;//The time on the Last Frame
 	SDL_Window* screen = SDL_CreateWindow("Tetris", 0, 0, 0, 0, 0);
 	SDL_Renderer* renderer;
 	bool done = false;//Whether to Quit the Program or Not
@@ -34,7 +35,7 @@ class Tetris
 	int rotateAnchorY = 0;
 	int rotation = 0;//Where the Piece is Rotated to, Default is 0
 
-	int gameMode = 2;//0 = Normal, 1 = bot, 2 = 40 Lines
+	int gameMode;//0 = Normal, 1 = bot, 2 = 40 Lines
 
 	int placeTime = (gameMode == 1) ? 150 : 1000;//How long the Piece takes to Place after Hitting the Bottom of the Board
 	int placeTimer = placeTime;//Timer to Track When the Piece will Place
@@ -423,9 +424,10 @@ class Tetris
 	int init()
 	{
 		SDL_DisplayMode dm;//Initialize Screen Size
-		if (SDL_GetDesktopDisplayMode(0, &dm))
+		if(SDL_GetDesktopDisplayMode(0, &dm))
 		{
 			std::cout << "Error Getting Display Mode";
+			std::cout << SDL_GetError();
 			return 1;
 		}
 		screenWidth = dm.w;
@@ -445,11 +447,12 @@ class Tetris
 		if (!renderer)
 		{
 			std::cout << "Error making renderer";
+			std::cout << SDL_GetError();
 			return 1;
 		}
 
 
-		SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);//Initialize Renderer
+	SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);//Initialize Renderer
 	SDL_RenderClear(renderer);
 	SDL_RenderPresent(renderer);
 
@@ -464,7 +467,7 @@ class Tetris
 	std::fstream weights("weights.txt");
 	for (int i = 0; i < 276; i++) {
 		for (int j = 0; j < hiddenNeurons; j++) {
-			int weightx = rand() / INT_MAX * 1.5;
+			int weightx = rand() * 1.5 / RAND_MAX;
 			std::string weighty = std::to_string(weightx);
 			weights << weighty + ",";
 		}
@@ -472,7 +475,7 @@ class Tetris
 
 	for (int i = 0; i < hiddenNeurons; i++) {
 		for (int j = 0; j < 11; j++) {
-			int weightx = rand() / INT_MAX * 1.5;
+			int weightx = rand() * 1.5 / RAND_MAX;
 			std::string weighty = std::to_string(weightx);
 			weights << weighty + ",";
 		}
@@ -481,7 +484,7 @@ class Tetris
 	std::string weightstr;
 	getline(weights, weightstr);
 
-	for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = rand() * 1.5 / INT_MAX;
+	for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = rand() * 1.5 / RAND_MAX;
 
 	return 0;
 }
@@ -546,12 +549,12 @@ class Tetris
 		switch(button)
 		{
 			case 0:
-				DASDir = -1;
+				if(gameMode != 1) DASDir = -1;
 				moveReset(time);
 				moveLeft();
 				break;
 			case 1:
-				DASDir = 1;
+				if(gameMode != 1) DASDir = 1;
 				moveReset(time);
 				moveRight();
 				break;
@@ -734,10 +737,17 @@ class Tetris
 
 	}
 
-		public:
 	Tetris(int modeGame)
 	{
 		gameMode = modeGame;
+		placeTime = (gameMode == 1) ? 150 : 1000;
+		fallTime = (gameMode == 1) ? 100 : 800;
+	}
+
+	Tetris()
+	{
+		placeTime = (gameMode == 1) ? 150 : 1000;
+		fallTime = (gameMode == 1) ? 100 : 800;
 	}
 
 	void run()
@@ -755,19 +765,38 @@ class Tetris
 			lastFrame = SDL_GetTicks();
 		}
 		SDL_DestroyWindow(screen);
-		SDL_Quit();
 	}
 
 	int calcScore()
 	{
-		return lineClears * lineClearWeight/lastFrame + int(lastFrame * surviveWeight);
+		return lineClears * lineClearWeight/(lastFrame - startTime) + int((lastFrame - startTime) * surviveWeight);
 	}
 };
 
 int main()
 {
-	Tetris* t = new Tetris(1);
-	(* t).run();
-	std::cout << (*t).calcScore();
+	Tetris *bots[10];
+	for(int i = 0; i < 10; i++) bots[i] = new Tetris(1);
+	for(int j = 0; j < 20; j++)
+	{
+		for(int i = 0; i < 10; i++)
+		{
+			(*bots[i]).startTime = SDL_GetTicks();
+			(*bots[i]).run();
+		}
+		for(int i = 0; i < 10; i++) std::cout << (*bots[i]).calcScore() << "\n";
+		Tetris* best = NULL;
+		int bestScore = 0;
+		Tetris* runnerUp = NULL;
+		int runnerUpScore = 0;
+		for(int i = 0; i < 10; i++) if((*bots[i]).calcScore() > bestScore)
+		{
+			runnerUp = best;
+			runnerUpScore = bestScore;
+			best = bots[i];
+			bestScore = (*best).calcScore();
+		}
+	}
+	SDL_Quit();
 	return 0;
 }
