@@ -424,7 +424,7 @@ class Tetris
 	int init()
 	{
 		SDL_DisplayMode dm;//Initialize Screen Size
-		if(SDL_GetDesktopDisplayMode(0, &dm))
+		if (SDL_GetDesktopDisplayMode(0, &dm))
 		{
 			std::cout << "Error Getting Display Mode";
 			std::cout << SDL_GetError();
@@ -452,39 +452,16 @@ class Tetris
 		}
 
 
-	SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);//Initialize Renderer
-	SDL_RenderClear(renderer);
-	SDL_RenderPresent(renderer);
+		SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);//Initialize Renderer
+		SDL_RenderClear(renderer);
+		SDL_RenderPresent(renderer);
 
-	lastFrame = SDL_GetTicks();//Initialize Time
-	std::srand(std::time(0));
+		lastFrame = SDL_GetTicks();//Initialize Time
+		std::srand(std::time(0));
 
-	for(int i = 0; i < 276; i++) for(int j = 0; j < hiddenNeurons; j++) inputWeights[i][j] = randDouble(-1, 1);
-	for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = randDouble(-1, 1);
-	for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < 11; j++) outputWeights[i][j] = randDouble(-1, 1);
-
-	// makes the weights file with random weights 
-	std::fstream weights("weights.txt");
-	for (int i = 0; i < 276; i++) {
-		for (int j = 0; j < hiddenNeurons; j++) {
-			int weightx = rand() * 1.5 / RAND_MAX;
-			std::string weighty = std::to_string(weightx);
-			weights << weighty + ",";
-		}
-	}
-
-	for (int i = 0; i < hiddenNeurons; i++) {
-		for (int j = 0; j < 11; j++) {
-			int weightx = rand() * 1.5 / RAND_MAX;
-			std::string weighty = std::to_string(weightx);
-			weights << weighty + ",";
-		}
-	}
-
-	std::string weightstr;
-	getline(weights, weightstr);
-
-	for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = rand() * 1.5 / RAND_MAX;
+//		make weights is used to generate any new files of random weights that we may want to save in the future 
+//		makeweights("weights.txt");
+		getweights("weights.txt");
 
 	return 0;
 }
@@ -684,6 +661,114 @@ class Tetris
 		return 1 / (1 + exp(-d));
 	}
 
+	void getweights(std::string fileName) {
+		std::fstream weights(fileName);
+		std::string weightstr;
+		double weight;
+		// inital layer to hidden layer weights
+		for (int i = 0; i < 276; i++) { 
+			for (int j = 0; j < hiddenNeurons; j++) {
+				getline(weights, weightstr);
+				weight = atof(weightstr.c_str());
+				inputWeights[i][j] = weight;
+			}
+		}
+
+		// hidden layer to hidden layer weights
+		for (int i = 0; i < hiddenLayers - 1; i++) {
+			for (int j = 0; j < hiddenNeurons; j++) {
+				for (int k = 0; k < hiddenNeurons; k++) {
+					getline(weights, weightstr);
+					weight = atof(weightstr.c_str());
+					hiddenWeights[i][j][k] = weight;
+				}
+			}
+		}
+
+		// hidden to output layer
+		for (int i = 0; i < hiddenNeurons; i++) {
+			for (int j = 0; j < 11; j++) {
+				getline(weights, weightstr);
+				weight = atof(weightstr.c_str());;
+				outputWeights[i][j] = weight;
+			}
+		}
+		weights.close();
+
+	}
+
+	void setweights(std::string fileName) {
+		std::fstream weights(fileName);
+		std::string weightstr;
+		double weight;
+
+		// input to hidden layer
+		for (int i = 0; i < 276; i++) {
+			for (int j = 0; j < hiddenNeurons; j++) {
+				weight = inputWeights[i][j];
+				weightstr = std::to_string(weight);
+				weights << weightstr + "\n";
+			}
+		}
+
+		// hidden layer to hidden layer weights
+		for (int i = 0; i < hiddenLayers - 1; i++) {
+			for (int j = 0; j < hiddenNeurons; j++) {
+				for (int k = 0; k < hiddenNeurons; k++) {
+					weight = hiddenWeights[i][j][k];
+					weightstr = std::to_string(weight);
+					weights << weightstr + "\n";
+				}
+			}
+		}
+
+		// hidden to output layer
+		for (int i = 0; i < hiddenNeurons; i++) {
+			for (int j = 0; j < 11; j++) {
+				weight = outputWeights[i][j];
+				weightstr = std::to_string(weight);
+				weights << weightstr + "\n";
+			}
+		}
+
+		weights.close();
+	}
+
+	void makeweights(std::string fileName) {
+		//makes random weights should become obsolote
+			// makes the weights file with random weights 
+		std::fstream weights(fileName);
+		for (int i = 0; i < 276; i++) {
+			for (int j = 0; j < hiddenNeurons; j++) {
+				double weightx = randDouble(-1, 1);
+				std::string weighty = std::to_string(weightx);
+				weights << weighty + "\n";
+			}
+		}
+
+		for (int i = 0; i < hiddenLayers - 1; i++) {
+			for (int j = 0; j < hiddenNeurons; j++) {
+				for (int k = 0; k < hiddenNeurons; k++) {
+					double weightx = randDouble(-1, 1);
+					std::string weighty = std::to_string(weightx);
+					weights << weighty + "\n";
+				}
+			}
+		}
+
+		for (int i = 0; i < hiddenNeurons; i++) {
+			for (int j = 0; j < 11; j++) {
+				double weightx = randDouble(-1, 1);
+				std::string weighty = std::to_string(weightx);
+				weights << weighty + "\n";
+
+			}
+		}
+		weights << "x";
+		weights.close();
+
+	}
+
 	void doNet()//Run Neural Network
 	{
 		//Set Inputs
@@ -702,7 +787,12 @@ class Tetris
 
 		for(int i = 0; i < hiddenLayers; i++) for(int j = 0; j < hiddenNeurons; j++) hiddenLayer[i][j] = 0;
 		//First Hidden Layer
-		for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < 276; j++) hiddenLayer[0][i] += inputLayer[j] * inputWeights[j][i];//Add Activations
+		for (int i = 0; i < hiddenNeurons; i++) {
+			for (int j = 0; j < 276; j++) {
+				hiddenLayer[0][i] += inputLayer[j] * inputWeights[j][i];//Add Activations
+			}
+		}
+
 		for(int i = 0; i < hiddenNeurons; i++) hiddenLayer[0][i] = sigmoid(hiddenLayer[0][i]);
 
 		//Other Hidden Layers
