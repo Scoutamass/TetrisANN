@@ -37,9 +37,9 @@ class Tetris
 
 	int gameMode;//0 = Normal, 1 = bot, 2 = 40 Lines
 
-	int placeTime = (gameMode == 1) ? 150 : 1000;//How long the Piece takes to Place after Hitting the Bottom of the Board
+	int placeTime = (gameMode == 1) ? 100 : 1000;//How long the Piece takes to Place after Hitting the Bottom of the Board
 	int placeTimer = placeTime;//Timer to Track When the Piece will Place
-	int fallTime = (gameMode == 1) ? 100 : 800;//How long the Piece Takes to Fall
+	int fallTime = (gameMode == 1) ? 75 : 800;//How long the Piece Takes to Fall
 	int fallTimer = fallTime * 2;//Timer to Track When the Piece will Fall
 	static const int ARR = 0;//Auto Repeat Rate, or how long in between Each Repeated Movement When Left or Right is Held
 	static const int DAS = 100;//Delayed Auto Shift, or How Long Left or Right has to be Held to Start Repeating
@@ -893,7 +893,7 @@ class Tetris
 
 	int calcScore()
 	{
-		return lineClears * lineClearWeight/(lastFrame - startTime) + int((lastFrame - startTime) * surviveWeight);
+		return int((lineClears * lineClearWeight)/(lastFrame - startTime)) + int((lastFrame - startTime) * surviveWeight);
 	}
 };
 
@@ -915,24 +915,30 @@ int main()
 
 	SDL_SetWindowSize(screen, screenWidth, screenHeight);
 	SDL_Renderer* renderer = SDL_CreateRenderer(screen, -1, SDL_RENDERER_SOFTWARE);
-	const int generationSize = 16;
-	const double randChance = 0.5;
-	const double randRange = 0.25;
+	const int generationSize = 20;
+	const double randChance = 0.75;
+	const double randRange = 0.05;
 	Tetris *bots[generationSize];
 	for(int i = 0; i < generationSize; i++) bots[i] = new Tetris(1, screen, renderer);
 
-	for(int j = 0; j < 100; j++)//Generation
+	bots[0]->getweights("best.txt");
+	bots[1]->getweights("runnerUp.txt");
+
+
+	Tetris* best = bots[0];
+	Tetris* runnerUp = bots[0];
+
+	for(int j = 0; j < 10; j++)//Generation
 	{
 		for(int i = 0; i < generationSize; i++)//Each in Generation
 		{
 			(*bots[i]).maxLines = i + j * 100;
 			(*bots[i]).startTime = SDL_GetTicks();
-			std::cout << bots[i] << "\t" << j << "\t" << i << "\n";
 			(*bots[i]).run();
 		}
-		Tetris* best = bots[0];
+		best = bots[0];
 		int bestScore = 0;
-		Tetris* runnerUp = bots[0];
+		runnerUp = bots[0];
 		int runnerUpScore = 0;
 		for(int i = 0; i < generationSize; i++) if((*bots[i]).calcScore() > bestScore)
 		{
@@ -941,6 +947,8 @@ int main()
 			best = bots[i];
 			bestScore = (*best).calcScore();
 		}
+		std::cout << " " << bestScore << "\n";
+		std::cout << runnerUpScore << "\n";
 		Tetris parent1 = *best;
 		Tetris parent2 = *runnerUp;
 		for(int i = 0; i < generationSize; i++) delete bots[i];
@@ -949,24 +957,27 @@ int main()
 		{
 			for(int j = 0; j < 276; j++) for(int k = 0; k < Tetris::hiddenNeurons; k++)
 			{
-				bots[i]->inputWeights[j][k] = Tetris::randDouble(0, 1) > 0.5 ? parent1.inputWeights[j][k] : parent2.inputWeights[j][k];
-				if(Tetris::randDouble(0, 1) < randChance) bots[i]->inputWeights[j][k] += Tetris::randDouble(-randRange, randRange);
+				bots[i]->inputWeights[j][k] = (Tetris::randDouble(0, 1) > 0.5 || i == 0) && i != 1 ? parent1.inputWeights[j][k] : parent2.inputWeights[j][k];
+				if(Tetris::randDouble(0, 1) < randChance && i > 1) bots[i]->inputWeights[j][k] += Tetris::randDouble(-randRange, randRange);
 			}
 
 			for(int l = 0; l < bots[i]->hiddenLayers - 1; l++) for(int j = 0; j < bots[i]->hiddenNeurons; j++) for(int k = 0; k < bots[i]->hiddenNeurons; k++)
 			{
-				bots[i]->hiddenWeights[l][j][k] = Tetris::randDouble(0, 1) > 0.5 ? parent1.hiddenWeights[l][j][k] : parent2.hiddenWeights[l][j][k];
-				if(Tetris::randDouble(0, 1) < randChance) bots[i]->hiddenWeights[l][j][k] += Tetris::randDouble(-randRange, randRange);
+				bots[i]->hiddenWeights[l][j][k] = (Tetris::randDouble(0, 1) > 0.5 || i == 0) && i != 1 ? parent1.hiddenWeights[l][j][k] : parent2.hiddenWeights[l][j][k];
+				if(Tetris::randDouble(0, 1) < randChance && i > 1) bots[i]->hiddenWeights[l][j][k] += Tetris::randDouble(-randRange, randRange);
 			}
 
 			for(int k = 0; k < Tetris::hiddenNeurons; k++) for(int j = 0; j < 11; j++)
 			{
-				bots[i]->outputWeights[j][k] = Tetris::randDouble(0, 1) > 0.5 ? parent1.outputWeights[j][k] : parent2.outputWeights[j][k];
-				if(Tetris::randDouble(0, 1) < randChance) bots[i]->outputWeights[j][k] += Tetris::randDouble(-randRange, randRange);
+				bots[i]->outputWeights[j][k] = (Tetris::randDouble(0, 1) > 0.5 || i == 0) && i != 1 ? parent1.outputWeights[j][k] : parent2.outputWeights[j][k];
+				if(Tetris::randDouble(0, 1) < randChance && i > 1) bots[i]->outputWeights[j][k] += Tetris::randDouble(-randRange, randRange);
 			}
 		}
 	}
+	best->makeweights("best.txt");
+	runnerUp->makeweights("runnerUp.txt");
 	for(int i = 0; i < generationSize; i++) delete bots[i];
 	SDL_Quit();
+
 	return 0;
 }
