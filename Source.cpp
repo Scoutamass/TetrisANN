@@ -14,7 +14,7 @@ class Tetris
 	int screenWidth = 0;
 	int screenHeight = 0;
 	int lastFrame = 1;//The time on the Last Frame
-	SDL_Window* screen = SDL_CreateWindow("Tetris", 0, 0, 0, 0, 0);
+	SDL_Window* screen;
 	SDL_Renderer* renderer;
 	bool done = false;//Whether to Quit the Program or Not
 	int startTime = 0;//Time Since Boot or Last Reset, Used to Calculate Time Playing
@@ -122,7 +122,7 @@ class Tetris
 	const int lineClearWeight = 1000;
 	const double surviveWeight = 0.01;
 
-	double randDouble(double min, double max)
+	static double randDouble(double min, double max)
 	{
 		return (rand() * 1.0/RAND_MAX * (max - min)) + min;
 	}
@@ -423,6 +423,7 @@ class Tetris
 
 	int init()
 	{
+		if(screen == NULL) screen = SDL_CreateWindow("Tetris", 0, 0, 0, 0, 0);
 		SDL_DisplayMode dm;//Initialize Screen Size
 		if (SDL_GetDesktopDisplayMode(0, &dm))
 		{
@@ -436,8 +437,8 @@ class Tetris
 		boardLeft = screenWidth / 2 - squareSize * 5;
 		boardTop = screenHeight / 2 - squareSize * 11;
 
-		SDL_SetWindowSize(screen, screenWidth, screenHeight);
-		renderer = SDL_CreateRenderer(screen, -1, SDL_RENDERER_SOFTWARE);
+		//SDL_SetWindowSize(screen, screenWidth, screenHeight);
+		if(renderer == NULL) renderer = SDL_CreateRenderer(screen, -1, SDL_RENDERER_SOFTWARE);
 		if (SDL_Init(SDL_INIT_EVERYTHING) != 0) printf("error initializing SDL: %s\n", SDL_GetError());//initialize SDL
 		if (!screen)
 		{
@@ -453,18 +454,42 @@ class Tetris
 
 
 		SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);//Initialize Renderer
-		SDL_RenderClear(renderer);
+		//SDL_RenderClear(renderer);
 		SDL_RenderPresent(renderer);
+
 
 		lastFrame = SDL_GetTicks();//Initialize Time
 		std::srand(std::time(0));
 
-//		make weights is used to generate any new files of random weights that we may want to save in the future 
-//		makeweights("weights.txt");
-		getweights("weights.txt");
+		for(int i = 0; i < 276; i++) for(int j = 0; j < hiddenNeurons; j++) inputWeights[i][j] = randDouble(-1, 1);
+		for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = randDouble(-1, 1);
+		for(int i = 0; i < hiddenNeurons; i++) for(int j = 0; j < 11; j++) outputWeights[i][j] = randDouble(-1, 1);
 
-	return 0;
-}
+		// makes the weights file with random weights 
+		std::fstream weights("weights.txt");
+		for (int i = 0; i < 276; i++) {
+			for (int j = 0; j < hiddenNeurons; j++) {
+				int weightx = rand() * 1.5 / RAND_MAX;
+				std::string weighty = std::to_string(weightx);
+				weights << weighty + ",";
+			}
+		}
+
+		for (int i = 0; i < hiddenNeurons; i++) {
+			for (int j = 0; j < 11; j++) {
+				int weightx = rand() * 1.5 / RAND_MAX;
+				std::string weighty = std::to_string(weightx);
+				weights << weighty + ",";
+			}
+		}
+
+		std::string weightstr;
+		getline(weights, weightstr);
+
+		for(int i = 0; i < hiddenLayers - 1; i++) for(int j = 0; j < hiddenNeurons; j++) for(int k = 0; k < hiddenNeurons; k++) hiddenWeights[i][j][k] = rand() * 1.5 / RAND_MAX;
+
+		return 0;
+	}
 
 	void reset()//Reset the Game Without Closing it
 	{
@@ -827,6 +852,15 @@ class Tetris
 
 	}
 
+	Tetris(int modeGame, SDL_Window* w, SDL_Renderer* r)
+	{
+		gameMode = modeGame;
+		placeTime = (gameMode == 1) ? 150 : 1000;
+		fallTime = (gameMode == 1) ? 100 : 800;
+		screen = w;
+		renderer = r;
+	}
+
 	Tetris(int modeGame)
 	{
 		gameMode = modeGame;
@@ -854,7 +888,7 @@ class Tetris
 			//SDL_Delay(std::max(frameTime - (SDL_GetTicks() - lastFrame) * 1.0, 1.0));
 			lastFrame = SDL_GetTicks();
 		}
-		SDL_DestroyWindow(screen);
+		//SDL_DestroyWindow(screen);
 	}
 
 	int calcScore()
@@ -865,28 +899,74 @@ class Tetris
 
 int main()
 {
-	Tetris *bots[10];
-	for(int i = 0; i < 10; i++) bots[i] = new Tetris(1);
-	for(int j = 0; j < 20; j++)
+	SDL_Window* screen = SDL_CreateWindow("Tetris", 0, 0, 0, 0, 0);
+	SDL_DisplayMode dm;//Initialize Screen Size
+	if(SDL_GetDesktopDisplayMode(0, &dm))
 	{
-		for(int i = 0; i < 10; i++)
+		std::cout << "Error Getting Display Mode";
+		std::cout << SDL_GetError();
+		return 1;
+	}
+	int screenWidth = dm.w;
+	int screenHeight = dm.h;
+	int squareSize = screenHeight / 23;
+	int boardLeft = screenWidth / 2 - squareSize * 5;
+	int boardTop = screenHeight / 2 - squareSize * 11;
+
+	SDL_SetWindowSize(screen, screenWidth, screenHeight);
+	SDL_Renderer* renderer = SDL_CreateRenderer(screen, -1, SDL_RENDERER_SOFTWARE);
+	const int generationSize = 16;
+	const double randChance = 0.5;
+	const double randRange = 0.25;
+	Tetris *bots[generationSize];
+	for(int i = 0; i < generationSize; i++) bots[i] = new Tetris(1, screen, renderer);
+
+	for(int j = 0; j < 100; j++)//Generation
+	{
+		for(int i = 0; i < generationSize; i++)//Each in Generation
 		{
+			(*bots[i]).maxLines = i + j * 100;
 			(*bots[i]).startTime = SDL_GetTicks();
+			std::cout << bots[i] << "\t" << j << "\t" << i << "\n";
 			(*bots[i]).run();
 		}
-		for(int i = 0; i < 10; i++) std::cout << (*bots[i]).calcScore() << "\n";
-		Tetris* best = NULL;
+		Tetris* best = bots[0];
 		int bestScore = 0;
-		Tetris* runnerUp = NULL;
+		Tetris* runnerUp = bots[0];
 		int runnerUpScore = 0;
-		for(int i = 0; i < 10; i++) if((*bots[i]).calcScore() > bestScore)
+		for(int i = 0; i < generationSize; i++) if((*bots[i]).calcScore() > bestScore)
 		{
 			runnerUp = best;
 			runnerUpScore = bestScore;
 			best = bots[i];
 			bestScore = (*best).calcScore();
 		}
+		Tetris parent1 = *best;
+		Tetris parent2 = *runnerUp;
+		for(int i = 0; i < generationSize; i++) delete bots[i];
+		for(int i = 0; i < generationSize; i++) bots[i] = new Tetris(1, screen, renderer);
+		for(int i = 0; i < generationSize * .75; i++) 
+		{
+			for(int j = 0; j < 276; j++) for(int k = 0; k < Tetris::hiddenNeurons; k++)
+			{
+				bots[i]->inputWeights[j][k] = Tetris::randDouble(0, 1) > 0.5 ? parent1.inputWeights[j][k] : parent2.inputWeights[j][k];
+				if(Tetris::randDouble(0, 1) < randChance) bots[i]->inputWeights[j][k] += Tetris::randDouble(-randRange, randRange);
+			}
+
+			for(int l = 0; l < bots[i]->hiddenLayers - 1; l++) for(int j = 0; j < bots[i]->hiddenNeurons; j++) for(int k = 0; k < bots[i]->hiddenNeurons; k++)
+			{
+				bots[i]->hiddenWeights[l][j][k] = Tetris::randDouble(0, 1) > 0.5 ? parent1.hiddenWeights[l][j][k] : parent2.hiddenWeights[l][j][k];
+				if(Tetris::randDouble(0, 1) < randChance) bots[i]->hiddenWeights[l][j][k] += Tetris::randDouble(-randRange, randRange);
+			}
+
+			for(int k = 0; k < Tetris::hiddenNeurons; k++) for(int j = 0; j < 11; j++)
+			{
+				bots[i]->outputWeights[j][k] = Tetris::randDouble(0, 1) > 0.5 ? parent1.outputWeights[j][k] : parent2.outputWeights[j][k];
+				if(Tetris::randDouble(0, 1) < randChance) bots[i]->outputWeights[j][k] += Tetris::randDouble(-randRange, randRange);
+			}
+		}
 	}
+	for(int i = 0; i < generationSize; i++) delete bots[i];
 	SDL_Quit();
 	return 0;
 }
